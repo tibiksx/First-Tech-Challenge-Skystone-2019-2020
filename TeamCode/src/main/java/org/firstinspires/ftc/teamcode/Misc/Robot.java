@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Misc;
 
 import android.os.SystemClock;
-import java.util.ArrayList;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
@@ -9,22 +8,32 @@ import org.firstinspires.ftc.teamcode.Hardware.DriveTrain;
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.RevBulkData;
 import org.openftc.revextensions2.ExpansionHubEx;
-import org.openftc.revextensions2.ExpansionHubServo;
 
 public class Robot extends OpMode {
 
     public static boolean usingDebugger = false; //for debugging using UDP Unicast
 
     //--------------REV STUFF-------------------------
-    //private RevBulkData revExpansionBulkData;
-    ExpansionHubEx expansionHub;
+    private RevBulkData revExpansionMasterBulkData;
+    private RevBulkData getRevExpansionSlaveBulkData;
+    ExpansionHubEx revMaster;
+    ExpansionHubEx revSlave;
     //------------------------------------------------
+
+
+
+    //--------------------REV MOTORS-------------------
+    ExpansionHubMotor fl = null;
+    ExpansionHubMotor fr = null;
+    ExpansionHubMotor bl = null;
+    ExpansionHubMotor br = null;
+    ExpansionHubMotor Lifter = null;
+    //-----------------------------------------------
 
     public long currTimeMillis = 0; //time in ms
 
     private DriveTrain driveTrain;
-    //holds all the rev expansion hub motors
-    private ArrayList<ExpansionHubMotor> allMotors = new ArrayList<>();
+
 
     @Override
     public void init() {
@@ -32,17 +41,15 @@ public class Robot extends OpMode {
 
 
         //---------------REV MOTORS--------------------
-        expansionHub = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub");
-        ExpansionHubMotor fl =(ExpansionHubMotor)hardwareMap.get("fl");
-        ExpansionHubMotor fr = (ExpansionHubMotor)hardwareMap.get("fr");
-        ExpansionHubMotor bl = (ExpansionHubMotor)hardwareMap.get("bl");
-        ExpansionHubMotor br = (ExpansionHubMotor)hardwareMap.get("br");
+        revMaster = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 1");
+        revSlave = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 2");
+        fl =(ExpansionHubMotor)hardwareMap.get("FL");
+        fr = (ExpansionHubMotor)hardwareMap.get("FR");
+        bl = (ExpansionHubMotor)hardwareMap.get("BL");
+        br = (ExpansionHubMotor)hardwareMap.get("BR");
+        Lifter = (ExpansionHubMotor)hardwareMap.get("Lifter");
 
-        allMotors.add(fl);
-        allMotors.add(fr);
-        allMotors.add(bl);
-        allMotors.add(br);
-        driveTrain = new DriveTrain();
+        driveTrain = new DriveTrain(fr,fl,br,bl,Lifter);
     }
 
     @Override

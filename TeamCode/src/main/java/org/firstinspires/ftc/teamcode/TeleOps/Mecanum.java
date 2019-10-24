@@ -1,15 +1,13 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.teamcode.Misc.Robot;
 
-@TeleOp
+@TeleOp(name = " ", group = " ")
 public class Mecanum extends Robot{
 
     @Override
     public void init() {
         super.init();
-
     }
 
     @Override
@@ -22,4 +20,8 @@ public class Mecanum extends Robot{
         super.start();
     }
 
+    @Override
+    public void loop() {
+
+    }
 }
