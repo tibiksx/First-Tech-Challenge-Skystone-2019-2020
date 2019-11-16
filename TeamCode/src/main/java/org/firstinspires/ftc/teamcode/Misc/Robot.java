@@ -6,14 +6,10 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
-import org.openftc.revextensions2.ExpansionHubMotor;
-import org.openftc.revextensions2.RevBulkData;
-import org.openftc.revextensions2.ExpansionHubEx;
 
 public class Robot extends OpMode {
 
-    public static boolean usingDebugger = false; //for debugging using UDP Unicast
-
+    public boolean usingDebugger = false; //for debugging using UDP Unicast
 
     public long currTimeMillis = 0; //time in ms
 
@@ -48,5 +44,4 @@ public class Robot extends OpMode {
     {
 
     }
-
 }
