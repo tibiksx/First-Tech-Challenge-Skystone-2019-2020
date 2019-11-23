@@ -13,6 +13,8 @@ public class PushbotTeleop extends OpMode {
     // Created a hardware object, named "robot"
     Hardware robot = new Hardware();
 
+    double posFound1 = 0.0, posFound2 = 0.0;
+
     // When driver hits init, execute ONCE
     @Override
     public void init() {
@@ -43,7 +45,7 @@ public class PushbotTeleop extends OpMode {
         robot.backLeftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         robot.backRightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        //robot.lifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        robot.lifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
     }
 
@@ -51,9 +53,7 @@ public class PushbotTeleop extends OpMode {
     @Override
     public void loop() {
 
-        telemetry.log().clear();
-        telemetry.addData("Currently in:", "LOOP");
-        telemetry.update();
+
 
         float drive, turn, strafe;
 
@@ -68,12 +68,52 @@ public class PushbotTeleop extends OpMode {
         double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
         double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
-        robot.frontLeftWheel.setPower(leftFrontPower);
-        robot.frontRightWheel.setPower(rightFrontPower);
-        robot.backLeftWheel.setPower(leftBackPower);
-        robot.backRightWheel.setPower(rightBackPower);
+        robot.frontLeftWheel.setPower(0.6*leftFrontPower);
+        robot.frontRightWheel.setPower(0.6*rightFrontPower);
+        robot.backLeftWheel.setPower(0.6*leftBackPower);
+        robot.backRightWheel.setPower(0.6*rightBackPower);
 
-        //robot.lifter.setPower(gamepad2.right_stick_y);
+        robot.lifter.setPower(gamepad2.right_stick_y);
+
+        if (gamepad2.a) {
+            posFound1 = 1;
+        }
+
+        if (gamepad2.b) {
+            posFound1 = 0.3;
+        }
+
+        if (gamepad2.x) {
+            posFound2 = 0;
+        }
+
+        if (gamepad2.y) {
+            posFound2 = 0.55;
+        }
+
+        if (gamepad1.a) {
+            robot.fliper2.setPosition(1);
+        }
+
+        if (gamepad1.b) {
+            robot.fliper2.setPosition(0);
+        }
+
+        if (gamepad1.x) {
+            robot.fliper1.setPosition(0.90);
+        }
+
+        if (gamepad1.y) {
+            robot.fliper1.setPosition(0.0);
+        }
+
+        robot.slider.setPower(-gamepad2.left_stick_y);
+
+        robot.foundation1.setPosition(posFound1);
+        robot.foundation2.setPosition(posFound2);
+
+        telemetry.addData("Servo Fundatie 1:", robot.foundation1.getPosition());
+        telemetry.addData("Servo Fundatie 2:", robot.foundation2.getPosition());
 
     }
 
