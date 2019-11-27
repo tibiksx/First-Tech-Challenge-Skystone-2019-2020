@@ -12,6 +12,9 @@ public class Hardware {
     public DcMotor backLeftWheel = null;
     public DcMotor backRightWheel = null;
 
+    public DcMotor test1 = null;
+    public DcMotor test2 = null;
+
     public DcMotor slider = null;
     public DcMotor lifter = null;
 
@@ -37,6 +40,9 @@ public class Hardware {
         backLeftWheel = hwMap.get(DcMotor.class, "BL");
         backRightWheel = hwMap.get(DcMotor.class, "BR");
 
+        test1 = hwMap.get(DcMotor.class, "motor1");
+        test2 = hwMap.get(DcMotor.class, "motor2");
+
         slider = hwMap.get(DcMotor.class, "slide");
         lifter = hwMap.get(DcMotor.class, "lift");
 
@@ -44,6 +50,9 @@ public class Hardware {
         foundation2 = hwMap.get(Servo.class, "fund2");
         fliper1 = hwMap.get(Servo.class, "flip1");
         fliper2 = hwMap.get(Servo.class, "flip2");
+
+        test1.setPower(0.0);
+        test2.setPower(0.0);
 
         frontLeftWheel.setPower(0.0);
         frontRightWheel.setPower(0.0);
@@ -63,7 +72,13 @@ public class Hardware {
         backLeftWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        test1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        test2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         lifter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        test1.setDirection(DcMotor.Direction.FORWARD);
+        test2.setDirection(DcMotor.Direction.FORWARD);
 
         frontLeftWheel.setDirection(DcMotor.Direction.FORWARD);
         frontRightWheel.setDirection(DcMotor.Direction.REVERSE);

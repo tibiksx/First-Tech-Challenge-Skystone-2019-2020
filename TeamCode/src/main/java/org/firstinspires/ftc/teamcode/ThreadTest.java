@@ -21,6 +21,21 @@ public class ThreadTest extends LinearOpMode {
         telemetry.addData("imi fut mama", "mama");
         telemetry.update();
 
+        robot.test1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.test1.setTargetPosition(6000);
+        robot.test1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        robot.test1.setPower(1.0);
+
+        while (opModeIsActive() && robot.test1.isBusy() && robot.test1.getCurrentPosition() < 6000) {
+            telemetry.addData("encd", robot.test1.getCurrentPosition());
+            telemetry.update();
+        }
+
+        robot.test1.setPower(0.0);
+
+        sleep(5000);
+
         Thread motor1 = new Thread(new RunMotor(robot.test1, 3000));
         Thread motor2 = new Thread(new RunMotor(robot.test2, 6000));
 
@@ -58,12 +73,12 @@ public class ThreadTest extends LinearOpMode {
         public void run() {
 
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             motor.setTargetPosition(noOfTicks);
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             motor.setPower(1.0);
 
-            while (motor.getCurrentPosition() < noOfTicks && motor.isBusy()) {
+            while (opModeIsActive() && motor.isBusy() && motor.getCurrentPosition() < noOfTicks) {
                 telemetry.addData("encd", motor.getCurrentPosition());
                 telemetry.update();
             }
