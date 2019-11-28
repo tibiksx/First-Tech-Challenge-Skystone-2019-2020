@@ -3,38 +3,39 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 import android.os.SystemClock;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.Misc.ControllerInput;
+import org.firstinspires.ftc.teamcode.Misc.Encoder;
 import org.firstinspires.ftc.teamcode.Misc.Robot;
+import org.firstinspires.ftc.teamcode.Misc.UDP_Unicast_Server;
+import org.firstinspires.ftc.teamcode.Threads.MotorThread;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name = " ", group = " ")
+@TeleOp(name = "Test_TeleOp", group = "Pushbot")
 public class Mecanum extends Robot{
 
-    final static int LOWERED_TICKS = 0;
-    final static int FIRST_TICKS = 50;
-    final static int SECOND_TICKS = 100;
-    final static int THIRD_TICKS = 150;
-    final static int HIGH_TICKS = 200;
-
-    public enum LIFTER_STATES
-    {
-        LOWERED,
-        FIRST,
-        SECOND,
-        THIRD,
-        HIGH
-
-    }
-
     public long currTimeMillis = 0; //time in ms
+    final public float powerFraction = (float)0.6;
 
-     public LIFTER_STATES lifter_state;
+    double posFound1 = 0.0, posFound2 = 0.0;
+
+    public UDP_Unicast_Server udpServer = null;
+
+    public Encoder rightEncoder = null;
+    public Encoder leftEncoder = null;
+    public Encoder backEncoder = null;
+
+    private final int ticksPerRev = 1600;
+    private final int wheelDiameter = 10; //in cm
 
     @Override
     public void init() {
         super.init();
-        lifter_state = LIFTER_STATES.LOWERED;
+        if(usingDebugger) udpServer = new UDP_Unicast_Server(50000);
+        //rightEncoder = new Encoder(robot.rightEncoderMotor,ticksPerRev);
+        rightEncoder = new Encoder(robot.rightEncoderMotor,ticksPerRev);
+
     }
 
     @Override
@@ -49,89 +50,101 @@ public class Mecanum extends Robot{
 
     @Override
     public void loop() {
-        currTimeMillis = SystemClock.uptimeMillis();
-
         float drive, turn, strafe;
 
         drive = -gamepad1.left_stick_y;
         turn = gamepad1.right_stick_x;
         strafe = -gamepad1.left_stick_x;
 
-        double leftFrontPower = Range.clip(drive + turn - strafe, -1.0, 1.0);
-        double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
-        double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
-        double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
+        // clip() = demands a number to be in certain bounds
+        // number is calculated and then processed
+        double leftFrontPower = //parsePower
+                (Range.clip(drive + turn - strafe, -1.0, 1.0));
+        double leftBackPower = //parsePower
+                (Range.clip(drive + turn + strafe, -1.0, 1.0));
+        double rightFrontPower = //parsePower
+                (Range.clip(drive - turn + strafe, -1.0, 1.0));
+        double rightBackPower = //parsePower
+                (Range.clip(drive - turn - strafe, -1.0, 1.0));
 
-        robot.fl.setPower(leftFrontPower);
-        robot.fr.setPower(rightFrontPower);
-        robot.bl.setPower(leftBackPower);
-        robot.br.setPower(rightBackPower);
+        robot.frontLeftWheel.setPower(powerFraction*leftFrontPower);
+        robot.frontRightWheel.setPower(powerFraction*rightFrontPower);
+        robot.backLeftWheel.setPower(powerFraction*leftBackPower);
+        robot.backRightWheel.setPower(powerFraction*rightBackPower);
 
-        //Update controller custom wrapper
-        controllerInputA.update();
-        controllerInputB.update();
+        robot.lifter.setPower(gamepad2.right_stick_y);
 
-
-        if(controllerInputA.XOnce()) //if x is pressed once
-        {
-            //move to higher state
-            LIFTER_STATES newState = nextState();
-            goToState(newState);
-
+        if (gamepad2.a) {
+            posFound1 = 1;
         }
-        if(controllerInputA.AOnce()) //if a is pressed once
-        {
-            //move to lower state
-            LIFTER_STATES newState =  previousState();
-            goToState(newState);
+
+        if (gamepad2.b) {
+            posFound1 = 0.3;
         }
-        telemetry.addData("Lifter Ticks:  ",robot.Lifter.getCurrentPosition());
+
+        if (gamepad2.x) {
+            posFound2 = 0;
+        }
+
+        if (gamepad2.y) {
+            posFound2 = 0.55;
+        }
+
+        if (gamepad1.a) {
+            robot.fliper2.setPosition(1);
+        }
+
+        if (gamepad1.b) {
+            robot.fliper2.setPosition(0);
+        }
+
+        if (gamepad1.x) {
+            robot.fliper1.setPosition(0.90);
+        }
+
+        if (gamepad1.y) {
+            robot.fliper1.setPosition(0.0);
+        }
+       /* if(controllerInputB.dpadUpOnce())
+        {
+            Thread runner = new Thread(new MotorThread(robot.lifter,1000,1));
+            runner.start();
+            try {
+                runner.join();
+            }
+            catch (InterruptedException e)
+            {
+                telemetry.addData("Failed to join ",runner.getId());
+            }
+
+        } */
+
+        robot.slider.setPower(-gamepad2.left_stick_y);
+
+        robot.foundation1.setPosition(posFound1);
+        robot.foundation2.setPosition(posFound2);
+
+        //telemetry.addData("Servo Fundatie 1:", robot.foundation1.getPosition());
+        //telemetry.addData("Servo Fundatie 2:", robot.foundation2.getPosition());
+        //computerDebugging.markEndOfUpdate();
+        telemetry.addData("encoder",rightEncoder.getDistance());
+        telemetry.update();
 
     }
 
-    LIFTER_STATES previousState() {
-        switch (lifter_state)
-        {
-            case FIRST: lifter_state = LIFTER_STATES.LOWERED; break;
-            case SECOND: lifter_state = LIFTER_STATES.FIRST; break;
-            case THIRD: lifter_state = LIFTER_STATES.SECOND; break;
-            case HIGH: lifter_state = LIFTER_STATES.THIRD;  break;
-        }
+    // When driver hits STOP, happens once
+    @Override
+    public void stop() {
 
-        return lifter_state;
+        telemetry.log().clear();
+        telemetry.addData("Currently in:", "STOP");
+        telemetry.update();
     }
 
-
-    LIFTER_STATES nextState()
+    double parsePower(double power)
     {
-        switch (lifter_state)
-        {
-            case LOWERED: lifter_state = LIFTER_STATES.FIRST; break;
-            case FIRST: lifter_state = LIFTER_STATES.SECOND; break;
-            case SECOND: lifter_state = LIFTER_STATES.THIRD; break;
-            case THIRD: lifter_state = LIFTER_STATES.HIGH; break;
-        }
-
-        return lifter_state;
+        if(power<0) return power;
+        return (1.04 - 1.068 * Math.pow(Math.E,-8.92*power));
     }
 
-
-    public void goToState(LIFTER_STATES newState) {
-        int position = 0;
-        if(newState == LIFTER_STATES.LOWERED) position = LOWERED_TICKS;
-        if(newState == LIFTER_STATES.FIRST) position = FIRST_TICKS;
-        if(newState == LIFTER_STATES.SECOND) position = SECOND_TICKS;
-        if(newState == LIFTER_STATES.THIRD) position = THIRD_TICKS;
-        if(newState == LIFTER_STATES.HIGH) position = HIGH_TICKS;
-
-        robot.Lifter.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
-        robot.Lifter.setTargetPosition(position);
-
-        robot.Lifter.setPower(1);
-        while (robot.Lifter.isBusy()) {
-
-        }
-        robot.Lifter.setPower(0);
-        robot.Lifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
-    }
 }
