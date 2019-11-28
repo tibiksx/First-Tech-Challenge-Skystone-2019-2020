@@ -1,13 +1,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
-@Disabled
 @TeleOp(name="Pushbot: Teleop", group="Pushbot")
 
 public class PushbotTeleop extends OpMode {
@@ -16,6 +14,7 @@ public class PushbotTeleop extends OpMode {
     Hardware robot = new Hardware();
 
     double posFound1 = 0.0, posFound2 = 0.0;
+    double coeff = 1.0;
 
     // When driver hits init, execute ONCE
     @Override
@@ -55,7 +54,13 @@ public class PushbotTeleop extends OpMode {
     @Override
     public void loop() {
 
+        if (gamepad1.left_bumper && coeff >= 0.2) {
+            coeff -= 0.1;
+        } else if (gamepad1.right_bumper && coeff <= 1) {
+            coeff += 0.1;
+        }
 
+        coeff = Range.clip(coeff, 0.0, 1.0);
 
         float drive, turn, strafe;
 
@@ -70,28 +75,12 @@ public class PushbotTeleop extends OpMode {
         double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
         double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
-        robot.frontLeftWheel.setPower(0.6*leftFrontPower);
-        robot.frontRightWheel.setPower(0.6*rightFrontPower);
-        robot.backLeftWheel.setPower(0.6*leftBackPower);
-        robot.backRightWheel.setPower(0.6*rightBackPower);
+        robot.frontLeftWheel.setPower(coeff*leftFrontPower);
+        robot.frontRightWheel.setPower(coeff*rightFrontPower);
+        robot.backLeftWheel.setPower(coeff*leftBackPower);
+        robot.backRightWheel.setPower(coeff*rightBackPower);
 
-        robot.lifter.setPower(gamepad2.right_stick_y);
-
-        if (gamepad2.a) {
-            posFound1 = 1;
-        }
-
-        if (gamepad2.b) {
-            posFound1 = 0.3;
-        }
-
-        if (gamepad2.x) {
-            posFound2 = 0;
-        }
-
-        if (gamepad2.y) {
-            posFound2 = 0.55;
-        }
+        // flipers
 
         if (gamepad1.a) {
             robot.fliper2.setPosition(1);
@@ -109,13 +98,25 @@ public class PushbotTeleop extends OpMode {
             robot.fliper1.setPosition(0.0);
         }
 
-        robot.slider.setPower(-gamepad2.left_stick_y);
+        // move the foundation (servo positions)
+
+        if (gamepad2.y) {
+            posFound1 = 1;
+            posFound2 = 0;
+        }
+
+        if (gamepad2.a) {
+            posFound1 = 0.3;
+            posFound2 = 0.55;
+        }
+
+        // lifter and slider
+
+        robot.lifter.setPower(-gamepad2.right_stick_y);
+        robot.slider.setPower(gamepad2.left_stick_y);
 
         robot.foundation1.setPosition(posFound1);
         robot.foundation2.setPosition(posFound2);
-
-        telemetry.addData("Servo Fundatie 1:", robot.foundation1.getPosition());
-        telemetry.addData("Servo Fundatie 2:", robot.foundation2.getPosition());
 
     }
 

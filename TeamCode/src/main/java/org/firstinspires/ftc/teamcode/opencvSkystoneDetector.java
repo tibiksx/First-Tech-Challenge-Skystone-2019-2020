@@ -20,22 +20,16 @@ import java.util.List;
 
 
 /**
- * Created by maryjaneb  on 11/13/2016.
- *
- * nerverest ticks
- * 60 1680
- * 40 1120
- * 20 560
+ * Implemented by Tiberiu Ureche @ 27 november 2019
  *
  * monitor: 640 x 480
- *YES
+ *
  */
 @Autonomous(name= "opencvSkystoneDetector", group="Sky autonomous")
 public class opencvSkystoneDetector extends LinearOpMode {
+
     private ElapsedTime runtime = new ElapsedTime();
 
-    //0 means skystone, 1 means yellow stone
-    //-1 for debug, but we can keep it like this because if it works, it should change to either 0 or 255
     private static int valMid = -1;
     private static int valLeft = -1;
     private static int valRight = -1;
@@ -76,9 +70,6 @@ public class opencvSkystoneDetector extends LinearOpMode {
 
             telemetry.update();
             sleep(100);
-            //call movement functions
-//            strafe(0.4, 200);
-//            moveDistance(0.4, 700);
 
         }
     }
