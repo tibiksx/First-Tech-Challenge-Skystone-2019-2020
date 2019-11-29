@@ -13,7 +13,7 @@ import java.net.UnknownHostException;
 
 import java.util.concurrent.Semaphore;
 
-
+@Disabled
 public class UDP_Unicast_Server implements Runnable {
     private final int clientPort;
     public static boolean kill = false;

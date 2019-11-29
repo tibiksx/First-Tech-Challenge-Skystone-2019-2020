@@ -17,7 +17,6 @@ public class Robot extends OpMode {
 
     public ComputerDebugging computerDebugging;
 
-    final int ticksPerRev = 1600;
     @Override
     public void init() {
 
@@ -38,9 +37,6 @@ public class Robot extends OpMode {
 
     @Override
     public void start(){
-        telemetry.log().clear();
-        telemetry.addData("Currently in:", "Beginning of PLAY");
-        telemetry.update();
 
         robot.frontLeftWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
         robot.frontRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
@@ -54,5 +50,12 @@ public class Robot extends OpMode {
     public void loop()
     {
         computerDebugging.markEndOfUpdate();
+        controllerInputB.update();
+        controllerInputA.update();
+    }
+
+    @Override
+    public void stop() {
+
     }
 }

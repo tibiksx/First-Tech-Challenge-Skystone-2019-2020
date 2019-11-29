@@ -1,22 +1,25 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 
 import android.os.SystemClock;
+
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.Misc.ControllerInput;
 import org.firstinspires.ftc.teamcode.Misc.Encoder;
 import org.firstinspires.ftc.teamcode.Misc.Robot;
 import org.firstinspires.ftc.teamcode.Misc.UDP_Unicast_Server;
 import org.firstinspires.ftc.teamcode.Threads.MotorThread;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
+import java.net.Inet4Address;
+import java.util.HashMap;
+
 import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name = "Test_TeleOp", group = "Pushbot")
-public class Mecanum extends Robot{
+public class Mecanum extends Robot {
 
-    public long currTimeMillis = 0; //time in ms
-    final public float powerFraction = (float)0.6;
+    final public float powerFraction = (float) 0.6;
 
     double posFound1 = 0.0, posFound2 = 0.0;
 
@@ -29,22 +32,43 @@ public class Mecanum extends Robot{
     private final int ticksPerRev = 1600;
     private final int wheelDiameter = 10; //in cm
 
+
+    public enum LIFTER {
+        LOW,
+        FIRST,
+        SECOND,
+        THIRD,
+        FOURTH
+    }
+
+    HashMap<LIFTER, Integer> lifterStates = new HashMap<>();
+
+    void initMap() {
+        lifterStates.put(LIFTER.LOW, 0);
+        lifterStates.put(LIFTER.FIRST, 1400);
+        lifterStates.put(LIFTER.SECOND, 3000);
+        lifterStates.put(LIFTER.THIRD, 4800);
+        lifterStates.put(LIFTER.FOURTH, 6300);
+    }
+
+    public LIFTER currentState;
+
     @Override
     public void init() {
         super.init();
-        if(usingDebugger) udpServer = new UDP_Unicast_Server(50000);
-        //rightEncoder = new Encoder(robot.rightEncoderMotor,ticksPerRev);
-        rightEncoder = new Encoder(robot.rightEncoderMotor,ticksPerRev);
-
+        if (usingDebugger) udpServer = new UDP_Unicast_Server(50000);
+        rightEncoder = new Encoder(robot.rightEncoderMotor, ticksPerRev);
+        currentState = LIFTER.LOW;
+        initMap();
     }
 
     @Override
-    public void init_loop(){
+    public void init_loop() {
         super.init_loop();
     }
 
     @Override
-    public void start(){
+    public void start() {
         super.start();
     }
 
@@ -56,8 +80,6 @@ public class Mecanum extends Robot{
         turn = gamepad1.right_stick_x;
         strafe = -gamepad1.left_stick_x;
 
-        // clip() = demands a number to be in certain bounds
-        // number is calculated and then processed
         double leftFrontPower = //parsePower
                 (Range.clip(drive + turn - strafe, -1.0, 1.0));
         double leftBackPower = //parsePower
@@ -67,12 +89,10 @@ public class Mecanum extends Robot{
         double rightBackPower = //parsePower
                 (Range.clip(drive - turn - strafe, -1.0, 1.0));
 
-        robot.frontLeftWheel.setPower(powerFraction*leftFrontPower);
-        robot.frontRightWheel.setPower(powerFraction*rightFrontPower);
-        robot.backLeftWheel.setPower(powerFraction*leftBackPower);
-        robot.backRightWheel.setPower(powerFraction*rightBackPower);
-
-        robot.lifter.setPower(gamepad2.right_stick_y);
+        robot.frontLeftWheel.setPower(powerFraction * leftFrontPower);
+        robot.frontRightWheel.setPower(powerFraction * rightFrontPower);
+        robot.backLeftWheel.setPower(powerFraction * leftBackPower);
+        robot.backRightWheel.setPower(powerFraction * rightBackPower);
 
         if (gamepad2.a) {
             posFound1 = 1;
@@ -105,30 +125,31 @@ public class Mecanum extends Robot{
         if (gamepad1.y) {
             robot.fliper1.setPosition(0.0);
         }
-       /* if(controllerInputB.dpadUpOnce())
-        {
-            Thread runner = new Thread(new MotorThread(robot.lifter,1000,1));
+
+        //robot.lifter.setPower(gamepad2.right_stick_y);
+
+        if (controllerInputB.dpadUpOnce()) {
+            LIFTER nextState = getNextState(currentState);
+            Thread runner = new Thread(new MotorThread(robot.lifter, getTicksFromState(nextState), 1));
             runner.start();
-            try {
-                runner.join();
-            }
-            catch (InterruptedException e)
-            {
-                telemetry.addData("Failed to join ",runner.getId());
-            }
+            currentState = nextState;
 
-        } */
+        }
 
-        robot.slider.setPower(-gamepad2.left_stick_y);
+        if (controllerInputB.dpadDownOnce()) {
+            LIFTER previousState = getPreviousState(currentState);
+            Thread runner = new Thread(new MotorThread(robot.lifter, getTicksFromState(previousState), 1));
+            runner.start();
+            currentState = previousState;
+        }
+
+        telemetry.addData("currentState:", currentState);
+        telemetry.update();
+
 
         robot.foundation1.setPosition(posFound1);
         robot.foundation2.setPosition(posFound2);
 
-        //telemetry.addData("Servo Fundatie 1:", robot.foundation1.getPosition());
-        //telemetry.addData("Servo Fundatie 2:", robot.foundation2.getPosition());
-        //computerDebugging.markEndOfUpdate();
-        telemetry.addData("encoder",rightEncoder.getDistance());
-        telemetry.update();
 
     }
 
@@ -141,10 +162,49 @@ public class Mecanum extends Robot{
         telemetry.update();
     }
 
-    double parsePower(double power)
-    {
-        if(power<0) return power;
-        return (1.04 - 1.068 * Math.pow(Math.E,-8.92*power));
+
+    LIFTER getNextState(LIFTER currentState) {
+        switch (currentState) {
+            case LOW:
+                return LIFTER.FIRST;
+            case FIRST:
+                return LIFTER.SECOND;
+            case SECOND:
+                return LIFTER.THIRD;
+            case THIRD:
+                return LIFTER.FOURTH;
+        }
+        return currentState;
+    }
+
+    LIFTER getPreviousState(LIFTER currentState) {
+        switch (currentState) {
+            case FIRST:
+                return LIFTER.LOW;
+            case SECOND:
+                return LIFTER.FIRST;
+            case THIRD:
+                return LIFTER.SECOND;
+            case FOURTH:
+                return LIFTER.THIRD;
+        }
+        return currentState;
+    }
+
+    int getTicksFromState(LIFTER currentState) {
+        switch (currentState) {
+            case LOW:
+                return 0;
+            case FIRST:
+                return 1400;
+            case SECOND:
+                return 3000;
+            case THIRD:
+                return 4800;
+            case FOURTH:
+                return 6300;
+        }
+        return -1; //code should never reach here. Yes, this function sucks...
     }
 
 }

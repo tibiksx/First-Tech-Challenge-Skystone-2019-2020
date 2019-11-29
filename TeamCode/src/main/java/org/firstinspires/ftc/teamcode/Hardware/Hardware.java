@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.ExpansionHubServo;
-import org.firstinspires.ftc.teamcode.Misc.Encoder;
 
 
 public class Hardware {
@@ -24,8 +23,8 @@ public class Hardware {
     public ExpansionHubServo fliper2 = null;
     public ExpansionHubServo fliper1 = null;
 
-    public ExpansionHubMotor leftEncoderMotor = null;
-    public ExpansionHubMotor backEncoderMotor = null;
+    //public ExpansionHubMotor leftEncoderMotor = null;
+    //public ExpansionHubMotor backEncoderMotor = null;
     public ExpansionHubMotor rightEncoderMotor = null;
 
     public ExpansionHubMotor testMotor = null;
@@ -81,6 +80,7 @@ public class Hardware {
         backLeftWheel.setMode(ExpansionHubMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightWheel.setMode(ExpansionHubMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        lifter.setMode(ExpansionHubMotor.RunMode.STOP_AND_RESET_ENCODER);
         lifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
 
         frontLeftWheel.setDirection(ExpansionHubMotor.Direction.FORWARD);

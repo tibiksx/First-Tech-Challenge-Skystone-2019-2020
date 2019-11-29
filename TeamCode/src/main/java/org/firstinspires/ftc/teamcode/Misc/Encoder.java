@@ -5,9 +5,9 @@ import org.openftc.revextensions2.ExpansionHubMotor;
 public class Encoder {
 
     private ExpansionHubMotor encoderMotor;
-    int ticksPerRev;
+    double ticksPerRev;
     int wheelDiameter = -1;
-    public Encoder(ExpansionHubMotor encoderMotor, int ticksPerRev,int wheelDiameter)
+    public Encoder(ExpansionHubMotor encoderMotor, double ticksPerRev,int wheelDiameter)
     {
         this.encoderMotor = encoderMotor;
         this.ticksPerRev = ticksPerRev;
@@ -15,7 +15,7 @@ public class Encoder {
         this.wheelDiameter = wheelDiameter;
     }
 
-    public Encoder(ExpansionHubMotor encoderMotor, int ticksPerRev)
+    public Encoder(ExpansionHubMotor encoderMotor, double ticksPerRev)
     {
         this.encoderMotor = encoderMotor;
         this.ticksPerRev = ticksPerRev;

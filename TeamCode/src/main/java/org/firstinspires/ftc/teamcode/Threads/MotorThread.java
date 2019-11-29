@@ -1,10 +1,14 @@
 package org.firstinspires.ftc.teamcode.Threads;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import android.os.SystemClock;
+
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
 import org.openftc.revextensions2.ExpansionHubMotor;
-import org.firstinspires.ftc.teamcode.Misc.Robot;
 public class MotorThread implements Runnable {
+
 
     public ExpansionHubMotor motor;
     public int ticks = -1;
@@ -34,6 +38,7 @@ public class MotorThread implements Runnable {
             motor.setPower(power);
             while (motor.getCurrentPosition() < motor.getTargetPosition()) {  }
             motor.setPower(0.0);
+            motor.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
         }
         if(time != -1) //move with time
         {
