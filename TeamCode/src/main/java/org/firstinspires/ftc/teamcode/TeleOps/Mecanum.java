@@ -1,18 +1,12 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 
-import android.os.SystemClock;
-
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Misc.Encoder;
 import org.firstinspires.ftc.teamcode.Misc.Robot;
 import org.firstinspires.ftc.teamcode.Misc.UDP_Unicast_Server;
-import org.firstinspires.ftc.teamcode.Threads.MotorThread;
-import org.openftc.revextensions2.ExpansionHubMotor;
-
-import java.net.Inet4Address;
-import java.util.HashMap;
+import org.firstinspires.ftc.teamcode.Threads.LifterThread;
 
 import com.qualcomm.robotcore.util.Range;
 
@@ -32,6 +26,8 @@ public class Mecanum extends Robot {
     private final int ticksPerRev = 1600;
     private final int wheelDiameter = 10; //in cm
 
+    public LifterThread lifterThread;
+
 
     public enum LIFTER {
         LOW,
@@ -41,25 +37,33 @@ public class Mecanum extends Robot {
         FOURTH
     }
 
-    HashMap<LIFTER, Integer> lifterStates = new HashMap<>();
-
-    void initMap() {
-        lifterStates.put(LIFTER.LOW, 0);
-        lifterStates.put(LIFTER.FIRST, 1400);
-        lifterStates.put(LIFTER.SECOND, 3000);
-        lifterStates.put(LIFTER.THIRD, 4800);
-        lifterStates.put(LIFTER.FOURTH, 6300);
-    }
-
     public LIFTER currentState;
+
+    double oldPower = 0;
+    double newPower = 0;
+
+    public Telemetry.Item state;
+    public Telemetry.Item threadState;
+    public Telemetry.Item lifterTicks;
 
     @Override
     public void init() {
         super.init();
         if (usingDebugger) udpServer = new UDP_Unicast_Server(50000);
+
         rightEncoder = new Encoder(robot.rightEncoderMotor, ticksPerRev);
+
         currentState = LIFTER.LOW;
-        initMap();
+
+        lifterThread = new LifterThread(robot.lifter);
+        Thread lifterRunner = new Thread(lifterThread);
+        lifterRunner.start();
+
+
+        telemetry.setAutoClear(false);
+        state = telemetry.addData("nivel:",currentState);
+        lifterTicks = telemetry.addData("ticks uri:",robot.lifter.getCurrentPosition());
+        threadState = telemetry.addData("stare thread",LifterThread.finished);
     }
 
     @Override
@@ -74,20 +78,18 @@ public class Mecanum extends Robot {
 
     @Override
     public void loop() {
+        super.loop();
+
         float drive, turn, strafe;
 
         drive = -gamepad1.left_stick_y;
         turn = gamepad1.right_stick_x;
         strafe = -gamepad1.left_stick_x;
 
-        double leftFrontPower = //parsePower
-                (Range.clip(drive + turn - strafe, -1.0, 1.0));
-        double leftBackPower = //parsePower
-                (Range.clip(drive + turn + strafe, -1.0, 1.0));
-        double rightFrontPower = //parsePower
-                (Range.clip(drive - turn + strafe, -1.0, 1.0));
-        double rightBackPower = //parsePower
-                (Range.clip(drive - turn - strafe, -1.0, 1.0));
+        double leftFrontPower = (Range.clip(drive + turn - strafe, -1.0, 1.0));
+        double leftBackPower =  (Range.clip(drive + turn + strafe, -1.0, 1.0));
+        double rightFrontPower = (Range.clip(drive - turn + strafe, -1.0, 1.0));
+        double rightBackPower = (Range.clip(drive - turn - strafe, -1.0, 1.0));
 
         robot.frontLeftWheel.setPower(powerFraction * leftFrontPower);
         robot.frontRightWheel.setPower(powerFraction * rightFrontPower);
@@ -111,45 +113,62 @@ public class Mecanum extends Robot {
         }
 
         if (gamepad1.a) {
-            robot.fliper2.setPosition(1);
+            robot.flipper2.setPosition(1);
         }
 
         if (gamepad1.b) {
-            robot.fliper2.setPosition(0);
+            robot.flipper2.setPosition(0);
         }
 
         if (gamepad1.x) {
-            robot.fliper1.setPosition(0.90);
+            robot.flipper1.setPosition(0.90);
         }
 
         if (gamepad1.y) {
-            robot.fliper1.setPosition(0.0);
+            robot.flipper1.setPosition(0.0);
         }
 
-        //robot.lifter.setPower(gamepad2.right_stick_y);
+
+        newPower = gamepad2.right_stick_y;
+        if(newPower != oldPower)
+        {
+            robot.lifter.setPower(newPower);
+        }
+        oldPower = newPower;
 
         if (controllerInputB.dpadUpOnce()) {
-            LIFTER nextState = getNextState(currentState);
-            Thread runner = new Thread(new MotorThread(robot.lifter, getTicksFromState(nextState), 1));
-            runner.start();
-            currentState = nextState;
+
+//           LIFTER nextState = getNextState(currentState);
+//           Thread runner = new Thread(new MotorThread(robot.lifter, getTicksFromState(nextState), 1));
+//           runner.start();
+//           currentState = nextState;
+
+           LIFTER nextState = getNextState(currentState);
+           lifterThread.setTicks(getTicksFromState(nextState));
+           currentState = nextState;
+
 
         }
 
         if (controllerInputB.dpadDownOnce()) {
+//            LIFTER previousState = getPreviousState(currentState);
+//            Thread runner = new Thread(new MotorThread(robot.lifter, getTicksFromState(previousState), 1));
+//            runner.start();
+//            currentState = previousState;
+
             LIFTER previousState = getPreviousState(currentState);
-            Thread runner = new Thread(new MotorThread(robot.lifter, getTicksFromState(previousState), 1));
-            runner.start();
+            lifterThread.setTicks(getTicksFromState(previousState));
             currentState = previousState;
         }
-
-        telemetry.addData("currentState:", currentState);
-        telemetry.update();
 
 
         robot.foundation1.setPosition(posFound1);
         robot.foundation2.setPosition(posFound2);
 
+        lifterTicks.setValue(robot.lifter.getCurrentPosition());
+        threadState.setValue(LifterThread.finished);
+        state.setValue(currentState);
+        telemetry.update();
 
     }
 
@@ -206,5 +225,65 @@ public class Mecanum extends Robot {
         }
         return -1; //code should never reach here. Yes, this function sucks...
     }
+
+
+
+
+
+//    private class LifterThread implements Runnable {
+//        public volatile boolean kill = false;
+//        private long lastMillis = 0;
+//        private volatile int currentTicks = 0;
+//        private volatile int lastTicks = 0;
+//        private volatile double power = 1;
+//
+//        public ExpansionHubMotor lifter;
+//
+//        public LifterThread(ExpansionHubMotor lifter)
+//        {
+//            this.lifter = lifter;
+//        }
+//
+//        @Override
+//        public void run() {
+//            while(true) {
+//                if (kill) {
+//                    break;
+//                }
+//                //telemetry.addData("ticks:",currentTicks);
+//                //telemetry.update();
+//
+//                //never run too fast
+//                if (SystemClock.uptimeMillis() - lastMillis < 50) {
+//                    continue;
+//                }
+//                //set the last send time
+//                lastMillis = SystemClock.uptimeMillis();
+//
+//                if(currentTicks != lastTicks) //we can move the motor to the new value
+//                {
+//                    //telemetry.addData("its a go","go");
+//                    //telemetry.update();
+//                    lifter.setTargetPosition(currentTicks);
+//                    lifter.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
+//                    lifter.setPower(power);
+//                    double startTime = SystemClock.uptimeMillis();
+//                    while(lifter.getCurrentPosition() < lifter.getTargetPosition()) {
+//                        if(SystemClock.uptimeMillis() - startTime > 5000) break;
+//                        //telemetry.addData("encoder: ",lifter.getCurrentPosition());
+//                        //telemetry.update();
+//                    }
+//                    lifter.setPower(0);
+//                    lifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
+//                }
+//
+//                lastTicks = currentTicks;
+//            }
+//        }
+//
+//        public void setTicks(int ticks){
+//            this.currentTicks = ticks;
+//        }
+//    }
 
 }

@@ -1,14 +1,12 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
-import org.firstinspires.ftc.teamcode.Misc.Encoder;
 import org.firstinspires.ftc.teamcode.Misc.Robot;
-import org.firstinspires.ftc.teamcode.Misc.UDP_Unicast_Server;
+import org.openftc.revextensions2.ExpansionHubMotor;
 
-import com.qualcomm.robotcore.util.Range;
-
-@TeleOp(name = "Test Coborare Lifter", group = "Pushbot")
+@TeleOp(name = "Lifter Only TeleOP ", group = "Pushbot")
 public class Test_Coborare extends Robot {
 
     @Override
@@ -26,9 +24,22 @@ public class Test_Coborare extends Robot {
         super.start();
     }
 
+    double oldPower = 0;
+    double newPower = 0;
     @Override
     public void loop() {
-        robot.lifter.setPower(gamepad2.right_stick_y);
+        newPower = gamepad2.right_stick_y;
+        if(newPower != oldPower)
+        {
+            robot.lifter.setPower(newPower);
+        }
+        oldPower = newPower;
+
+        PIDCoefficients pidCoefficients = robot.lifter.getPIDCoefficients(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
+        telemetry.addData("p:",pidCoefficients.p);
+        telemetry.addData("i:",pidCoefficients.i);
+        telemetry.addData("d:",pidCoefficients.d);
+        telemetry.update();
     }
 
     @Override

@@ -49,7 +49,7 @@ public class Robot extends OpMode {
     @Override
     public void loop()
     {
-        computerDebugging.markEndOfUpdate();
+        //computerDebugging.markEndOfUpdate();
         controllerInputB.update();
         controllerInputA.update();
     }

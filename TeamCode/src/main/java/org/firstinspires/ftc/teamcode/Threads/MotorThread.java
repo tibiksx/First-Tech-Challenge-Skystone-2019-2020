@@ -4,7 +4,6 @@ import android.os.SystemClock;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.openftc.revextensions2.ExpansionHubMotor;
 public class MotorThread implements Runnable {
@@ -36,7 +35,11 @@ public class MotorThread implements Runnable {
             motor.setTargetPosition(ticks);
             motor.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
             motor.setPower(power);
-            while (motor.getCurrentPosition() < motor.getTargetPosition()) {  }
+            double oldTime = SystemClock.uptimeMillis();
+            while (motor.getCurrentPosition() < motor.getTargetPosition()) {
+                currentTime = SystemClock.uptimeMillis();
+                if(currentTime - oldTime > 3000) break;
+            }
             motor.setPower(0.0);
             motor.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
         }
