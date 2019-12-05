@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 @TeleOp(name="Pushbot: Teleop", group="Pushbot")
 
 public class PushbotTeleop extends OpMode {
@@ -16,30 +18,37 @@ public class PushbotTeleop extends OpMode {
     double posFound1 = 0.0, posFound2 = 0.0;
     double coeff = 1.0;
 
-    // When driver hits init, execute ONCE
+    public ControllerInput controllerInputA;
+    public ControllerInput controllerInputB;
+
+    public LifterThread lifterThread;
+
+
+    public enum LIFTER {
+        LOW,
+        FIRST,
+        SECOND,
+        THIRD,
+        FOURTH
+    }
+
+    public LIFTER currentState;
+    LIFTER[] level = {LIFTER.LOW, LIFTER.FIRST, LIFTER.SECOND, LIFTER.THIRD, LIFTER.FOURTH};
+
+    double oldPower = 0;
+    double newPower = 0;
+
+    public Telemetry.Item state;
+    public Telemetry.Item threadState;
+    public Telemetry.Item lifterTicks;
+
     @Override
     public void init() {
 
-        telemetry.log().clear();
-        telemetry.addData("Currently in:", "INIT");
-        telemetry.update();
-
         robot.init(hardwareMap);
 
-    }
-
-    // After init() function, execute in loop until op mode is started
-    @Override
-    public void init_loop() {
-    }
-
-    // Execute ONCE when the op mode is started
-    @Override
-    public void start() {
-
-        telemetry.log().clear();
-        telemetry.addData("Currently in:", "Beginning of PLAY");
-        telemetry.update();
+        controllerInputA = new ControllerInput(gamepad1);
+        controllerInputB = new ControllerInput(gamepad2);
 
         robot.frontLeftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         robot.frontRightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -47,6 +56,27 @@ public class PushbotTeleop extends OpMode {
         robot.backRightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         robot.lifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        currentState = LIFTER.LOW;
+
+        lifterThread = new LifterThread(robot.lifter);
+        Thread lifterRunner = new Thread(lifterThread);
+        lifterRunner.start();
+
+
+        telemetry.setAutoClear(false);
+        state = telemetry.addData("nivel:",currentState);
+        lifterTicks = telemetry.addData("ticks uri:", robot.lifter.getCurrentPosition());
+        threadState = telemetry.addData("stare thread", LifterThread.finished);
+    }
+
+    @Override
+    public void init_loop() {
+
+    }
+
+    @Override
+    public void start() {
 
     }
 
@@ -75,10 +105,10 @@ public class PushbotTeleop extends OpMode {
         double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
         double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
-        robot.frontLeftWheel.setPower(coeff*leftFrontPower);
-        robot.frontRightWheel.setPower(coeff*rightFrontPower);
-        robot.backLeftWheel.setPower(coeff*leftBackPower);
-        robot.backRightWheel.setPower(coeff*rightBackPower);
+        robot.frontLeftWheel.setPower(coeff * leftFrontPower);
+        robot.frontRightWheel.setPower(coeff * rightFrontPower);
+        robot.backLeftWheel.setPower(coeff * leftBackPower);
+        robot.backRightWheel.setPower(coeff * rightBackPower);
 
         // flipers
 
@@ -111,16 +141,47 @@ public class PushbotTeleop extends OpMode {
         }
 
         // lifter and slider
-
-        robot.lifter.setPower(-gamepad2.right_stick_y);
         robot.slider.setPower(gamepad2.left_stick_y);
 
         robot.foundation1.setPosition(posFound1);
         robot.foundation2.setPosition(posFound2);
 
+        //////////////////////
+
+        newPower = gamepad2.right_stick_y;
+
+        if(newPower != oldPower) {
+            robot.lifter.setPower(newPower);
+        }
+        oldPower = newPower;
+
+        if (controllerInputB.dpadLeftOnce()) {
+            
+        }
+
+        if (controllerInputB.dpadUpOnce()) {
+
+            LIFTER nextState = getNextState(currentState);
+            lifterThread.setTicks(getTicksFromState(nextState));
+            currentState = nextState;
+
+        }
+
+        if (controllerInputB.dpadDownOnce()) {
+
+            LIFTER previousState = getPreviousState(currentState);
+            lifterThread.setTicks(getTicksFromState(previousState));
+            currentState = previousState;
+        }
+
+        lifterTicks.setValue(robot.lifter.getCurrentPosition());
+        telemetry.update();
+
+        controllerInputA.update();
+        controllerInputB.update();
+
     }
 
-    // When driver hits STOP, happens once
     @Override
     public void stop() {
 
@@ -128,4 +189,50 @@ public class PushbotTeleop extends OpMode {
         telemetry.addData("Currently in:", "STOP");
         telemetry.update();
     }
+
+    LIFTER getNextState(LIFTER currentState) {
+        switch (currentState) {
+            case LOW:
+                return LIFTER.FIRST;
+            case FIRST:
+                return LIFTER.SECOND;
+            case SECOND:
+                return LIFTER.THIRD;
+            case THIRD:
+                return LIFTER.FOURTH;
+        }
+        return currentState;
+    }
+
+    LIFTER getPreviousState(LIFTER currentState) {
+        switch (currentState) {
+            case FIRST:
+                return LIFTER.LOW;
+            case SECOND:
+                return LIFTER.FIRST;
+            case THIRD:
+                return LIFTER.SECOND;
+            case FOURTH:
+                return LIFTER.THIRD;
+        }
+        return currentState;
+    }
+
+    int getTicksFromState(LIFTER currentState) {
+        switch (currentState) {
+            case LOW:
+                return 0;
+            case FIRST:
+                return 1400;
+            case SECOND:
+                return 3000;
+            case THIRD:
+                return 4800;
+            case FOURTH:
+                return 6300;
+        }
+        return -1; //code should never reach here. Yes, this function sucks...
+    }
+
+
 }

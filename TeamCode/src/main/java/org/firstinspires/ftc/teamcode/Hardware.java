@@ -72,13 +72,18 @@ public class Hardware {
         backLeftWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        test1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        test2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         test1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         test2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         lifter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         test1.setDirection(DcMotor.Direction.FORWARD);
-        test2.setDirection(DcMotor.Direction.FORWARD);
+        test2.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeftWheel.setDirection(DcMotor.Direction.FORWARD);
         frontRightWheel.setDirection(DcMotor.Direction.REVERSE);

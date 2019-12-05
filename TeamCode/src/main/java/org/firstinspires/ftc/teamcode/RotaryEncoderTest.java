@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @Autonomous(name="EncoderTest", group="Pushbot")
+@Disabled
 public class RotaryEncoderTest extends LinearOpMode {
 
     Hardware robot = new Hardware();
