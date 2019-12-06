@@ -17,6 +17,7 @@ public class PushbotTeleop extends OpMode {
 
     double posFound1 = 0.0, posFound2 = 0.0;
     double coeff = 1.0;
+    int i = 0;
 
     public ControllerInput controllerInputA;
     public ControllerInput controllerInputB;
@@ -41,6 +42,7 @@ public class PushbotTeleop extends OpMode {
     public Telemetry.Item state;
     public Telemetry.Item threadState;
     public Telemetry.Item lifterTicks;
+    public Telemetry.Item lifterLevel;
 
     @Override
     public void init() {
@@ -68,6 +70,7 @@ public class PushbotTeleop extends OpMode {
         state = telemetry.addData("nivel:",currentState);
         lifterTicks = telemetry.addData("ticks uri:", robot.lifter.getCurrentPosition());
         threadState = telemetry.addData("stare thread", LifterThread.finished);
+        lifterLevel = telemetry.addData("level:", level[i]);
     }
 
     @Override
@@ -155,26 +158,29 @@ public class PushbotTeleop extends OpMode {
         }
         oldPower = newPower;
 
-        if (controllerInputB.dpadLeftOnce()) {
-            
-        }
+        if (controllerInputB.dpadLeftOnce() && i > 0) {
 
-        if (controllerInputB.dpadUpOnce()) {
-
-            LIFTER nextState = getNextState(currentState);
-            lifterThread.setTicks(getTicksFromState(nextState));
-            currentState = nextState;
+            i--;
 
         }
 
-        if (controllerInputB.dpadDownOnce()) {
+        if (controllerInputB.dpadRightOnce() && i < 4) {
 
-            LIFTER previousState = getPreviousState(currentState);
-            lifterThread.setTicks(getTicksFromState(previousState));
-            currentState = previousState;
+            i++;
+        }
+
+        if (controllerInputB.dpadUpOnce() && LifterThread.finished) {
+
+            lifterThread.setTicks(getTicksFromState(level[i]));
+        }
+
+        if (controllerInputB.dpadDownOnce() && LifterThread.finished) {
+
+            lifterThread.setTicks(getTicksFromState(level[i]));
         }
 
         lifterTicks.setValue(robot.lifter.getCurrentPosition());
+        lifterLevel.setValue(level[i]);
         telemetry.update();
 
         controllerInputA.update();
@@ -188,34 +194,6 @@ public class PushbotTeleop extends OpMode {
         telemetry.log().clear();
         telemetry.addData("Currently in:", "STOP");
         telemetry.update();
-    }
-
-    LIFTER getNextState(LIFTER currentState) {
-        switch (currentState) {
-            case LOW:
-                return LIFTER.FIRST;
-            case FIRST:
-                return LIFTER.SECOND;
-            case SECOND:
-                return LIFTER.THIRD;
-            case THIRD:
-                return LIFTER.FOURTH;
-        }
-        return currentState;
-    }
-
-    LIFTER getPreviousState(LIFTER currentState) {
-        switch (currentState) {
-            case FIRST:
-                return LIFTER.LOW;
-            case SECOND:
-                return LIFTER.FIRST;
-            case THIRD:
-                return LIFTER.SECOND;
-            case FOURTH:
-                return LIFTER.THIRD;
-        }
-        return currentState;
     }
 
     int getTicksFromState(LIFTER currentState) {
