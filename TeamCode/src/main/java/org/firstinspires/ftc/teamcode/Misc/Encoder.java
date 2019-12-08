@@ -22,7 +22,7 @@ public class Encoder {
         encoderMotor.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public int getTicks()
+    public int getPosition()
     {
         return encoderMotor.getCurrentPosition();
     }

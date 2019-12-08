@@ -10,7 +10,6 @@ public class LifterThread implements Runnable {
     private long lastMillis = 0;
     private volatile int currentTicks = 0;
     private volatile int lastTicks = 0;
-    private volatile double power = 1;
 
     public static volatile boolean finished = true;
 
@@ -37,28 +36,26 @@ public class LifterThread implements Runnable {
 
             if(currentTicks != lastTicks) //we can move the motor to the new value
             {
-                lifter.setTargetPosition(currentTicks);
-                lifter.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
-                lifter.setPower(power);
                 finished = false;
                 double startTime = SystemClock.uptimeMillis();
 
                 if(lifter.getCurrentPosition() < currentTicks)
                 {
-                    while(lifter.getCurrentPosition() < lifter.getTargetPosition()) {
-                        if(SystemClock.uptimeMillis() - startTime > 1000) break;
+                    lifter.setPower(1);
+                    while(lifter.getCurrentPosition() < currentTicks) {
+                        if(SystemClock.uptimeMillis() - startTime > 1300) break;
                     }
                 }
                 else
                 {
-                    while(lifter.getCurrentPosition() > lifter.getTargetPosition()) {
-                        if(SystemClock.uptimeMillis() - startTime > 1000) break;
+                    lifter.setPower(-1);
+                    while(lifter.getCurrentPosition() > currentTicks) {
+                        if(SystemClock.uptimeMillis() - startTime > 1300) break;
                     }
                 }
 
                 finished = true;
                 lifter.setPower(0);
-                lifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
             }
 
             lastTicks = currentTicks;
