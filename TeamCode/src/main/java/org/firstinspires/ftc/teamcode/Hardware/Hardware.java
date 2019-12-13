@@ -1,7 +1,6 @@
 
 package org.firstinspires.ftc.teamcode.Hardware;
 
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.openftc.revextensions2.ExpansionHubMotor;
@@ -24,13 +23,13 @@ public class Hardware {
     public ExpansionHubServo foundation1 = null;
     public ExpansionHubServo foundation2 = null;
 
-    //----------------------COLLECTER SERVOS-------------------
+    //----------------------COLLECTOR SERVOS-------------------
     public ExpansionHubServo flipper2 = null;
     public ExpansionHubServo flipper1 = null;
 
-    //-----------------------ENCODERS--------------------------
-    //public ExpansionHubMotor leftEncoderMotor = null;
-    //public ExpansionHubMotor backEncoderMotor = null;
+    //-----------------------ENCODER MOTORS--------------------------
+    public ExpansionHubMotor leftEncoderMotor = null;
+    public ExpansionHubMotor backEncoderMotor = null;
     public ExpansionHubMotor rightEncoderMotor = null;
 
     //-----------------------TEST MOTORS-----------------------
@@ -60,9 +59,9 @@ public class Hardware {
         flipper1 = hwMap.get(ExpansionHubServo.class, "flip1");
         flipper2 = hwMap.get(ExpansionHubServo.class, "flip2");
 
-        //backEncoder = hwMap.get(ExpansionHubMotor.class,"backEncoder");
-        //leftEncoder = hwMap.get(ExpansionHubMotor.class,"leftEncoder");
-        rightEncoderMotor = hwMap.get(ExpansionHubMotor.class,"motor1");
+        leftEncoderMotor = hwMap.get(ExpansionHubMotor.class,"FR");
+        rightEncoderMotor = hwMap.get(ExpansionHubMotor.class,"BR");
+        backEncoderMotor = hwMap.get(ExpansionHubMotor.class,"motor1");
 
         testMotor = hwMap.get(ExpansionHubMotor.class,"motor2");
 
@@ -84,7 +83,7 @@ public class Hardware {
         backLeftWheel.setMode(ExpansionHubMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightWheel.setMode(ExpansionHubMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        lifter.setMode(ExpansionHubMotor.RunMode.STOP_AND_RESET_ENCODER);//might reset when lifter is half-way up, messes up the ticks
+//        lifter.setMode(ExpansionHubMotor.RunMode.STOP_AND_RESET_ENCODER);//might reset when lifter is half-way up, messes up the ticks
         lifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
 
         frontLeftWheel.setDirection(ExpansionHubMotor.Direction.FORWARD);

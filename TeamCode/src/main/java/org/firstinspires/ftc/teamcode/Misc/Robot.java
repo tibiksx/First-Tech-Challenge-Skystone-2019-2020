@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.Misc;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
+import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.RevBulkData;
 
 public class Robot extends OpMode {
 
@@ -17,6 +19,16 @@ public class Robot extends OpMode {
 
     public ComputerDebugging computerDebugging;
 
+    public ExpansionHubEx revMaster = null;
+    public ExpansionHubEx revSlave = null;
+
+
+    protected final int TICKS_PER_REV = 1600;
+
+    public Encoder rightEncoder = null;
+    public Encoder leftEncoder = null;
+    public Encoder backEncoder = null;
+
     @Override
     public void init() {
 
@@ -27,6 +39,13 @@ public class Robot extends OpMode {
 
         robot = new Hardware();
         robot.init(hardwareMap);
+
+        revMaster = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 1");
+        revSlave = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 2");
+
+        leftEncoder = new Encoder(robot.leftEncoderMotor,TICKS_PER_REV);
+//        backEncoder = new Encoder(robot.backEncoderMotor,ticksPerRev);
+//        rightEncoder = new Encoder(robot.rightEncoderMotor, ticksPerRev);
 
     }
 

@@ -20,6 +20,7 @@ public class LifterThread implements Runnable {
         this.lifter = lifter;
     }
 
+    /* TODO Pass Expansion Hub as a parameter and optimize the code */
     @Override
     public void run() {
         while(true) {

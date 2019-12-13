@@ -5,12 +5,12 @@ import org.openftc.revextensions2.ExpansionHubMotor;
 public class Encoder {
 
     private ExpansionHubMotor encoderMotor;
-    double ticksPerRev;
+    double TICKS_PER_REV;
     int wheelDiameter = -1;
     public Encoder(ExpansionHubMotor encoderMotor, double ticksPerRev,int wheelDiameter)
     {
         this.encoderMotor = encoderMotor;
-        this.ticksPerRev = ticksPerRev;
+        this.TICKS_PER_REV = ticksPerRev;
         encoderMotor.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
         this.wheelDiameter = wheelDiameter;
     }
@@ -18,7 +18,7 @@ public class Encoder {
     public Encoder(ExpansionHubMotor encoderMotor, double ticksPerRev)
     {
         this.encoderMotor = encoderMotor;
-        this.ticksPerRev = ticksPerRev;
+        this.TICKS_PER_REV = ticksPerRev;
         encoderMotor.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
     }
 
@@ -29,7 +29,7 @@ public class Encoder {
 
     public double getRotations()
     {
-        return encoderMotor.getCurrentPosition()/(float)ticksPerRev;
+        return encoderMotor.getCurrentPosition()/(float)TICKS_PER_REV;
     }
 
     public void resetTicks()

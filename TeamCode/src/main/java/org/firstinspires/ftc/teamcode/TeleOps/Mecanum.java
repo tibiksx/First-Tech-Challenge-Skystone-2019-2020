@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Misc.Encoder;
+
 import org.firstinspires.ftc.teamcode.Misc.Robot;
 import org.firstinspires.ftc.teamcode.Misc.UDP_Unicast_Server;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
@@ -21,13 +21,6 @@ public class Mecanum extends Robot {
 
     public UDP_Unicast_Server udpServer = null;
 
-    public Encoder rightEncoder = null;
-    public Encoder leftEncoder = null;
-    public Encoder backEncoder = null;
-
-    private final int ticksPerRev = 1600;
-    private final int wheelDiameter = 10; //in cm
-
     public LifterThread lifterThread;
 
     public enum LIFTER {
@@ -44,25 +37,20 @@ public class Mecanum extends Robot {
     double oldPower = 0;
     double newPower = 0;
 
-    public Telemetry.Item state;
-    public Telemetry.Item threadState;
-    public Telemetry.Item lifterTicks;
+    public Telemetry.Item leftEncoderTicks = null;
+    public Telemetry.Item motorVelocity = null;
 
     @Override
     public void init() {
         super.init();
         if (usingDebugger) udpServer = new UDP_Unicast_Server(50000);
 
-        rightEncoder = new Encoder(robot.rightEncoderMotor, ticksPerRev);
-
         lifterThread = new LifterThread(robot.lifter);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
         telemetry.setAutoClear(false);
-        state = telemetry.addData("nivel:", currentState);
-        lifterTicks = telemetry.addData("ticks uri:", robot.lifter.getCurrentPosition());
-        threadState = telemetry.addData("stare thread", LifterThread.finished);
+        leftEncoderTicks = telemetry.addData( "encoder Left:",leftEncoder.getPosition());
     }
 
     @Override
@@ -77,6 +65,7 @@ public class Mecanum extends Robot {
 
     @Override
     public void loop() {
+        /* TODO Optimize code with Expansion Hub Bulk Data */
         super.loop();
 
         float drive, turn, strafe;
@@ -95,19 +84,19 @@ public class Mecanum extends Robot {
         robot.backLeftWheel.setPower(powerFraction * leftBackPower);
         robot.backRightWheel.setPower(powerFraction * rightBackPower);
 
-        if (gamepad2.a) {
+        if (controllerInputB.AOnce()){
             posFound1 = 1;
         }
 
-        if (gamepad2.b) {
+        if (controllerInputB.BOnce()) {
             posFound1 = 0.3;
         }
 
-        if (gamepad2.x) {
+        if (controllerInputB.XOnce()) {
             posFound2 = 0;
         }
 
-        if (gamepad2.y) {
+        if (controllerInputB.YOnce()) {
             posFound2 = 0.55;
         }
 
@@ -115,22 +104,22 @@ public class Mecanum extends Robot {
             robot.flipper2.setPosition(1);
         }
 
-        if (gamepad1.b) {
+        if (controllerInputA.AOnce()) {
             robot.flipper2.setPosition(0);
         }
 
-        if (gamepad1.x) {
+        if (controllerInputA.XOnce()) {
             robot.flipper1.setPosition(0.90);
         }
 
-        if (gamepad1.y) {
+        if (controllerInputA.YOnce()) {
             robot.flipper1.setPosition(0.0);
         }
 
 
         newPower = gamepad2.right_stick_y;
         if (newPower != oldPower && LifterThread.finished) {
-            robot.lifter.setPower(newPower);
+            robot.lifter.setPower(-newPower);
         }
         oldPower = newPower;
 
@@ -149,10 +138,7 @@ public class Mecanum extends Robot {
         robot.foundation1.setPosition(posFound1);
         robot.foundation2.setPosition(posFound2);
 
-        lifterTicks.setValue(robot.lifter.getCurrentPosition());
-        threadState.setValue(LifterThread.finished);
-        state.setValue(currentState);
-        telemetry.update();
+        leftEncoderTicks.setValue(leftEncoder.getPosition());
 
     }
 
