@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
 
 import org.firstinspires.ftc.teamcode.Misc.DifferentialDrive;
-import org.openftc.revextensions2.ExpansionHubMotor;
 
 @Autonomous(name = "Auto Test", group = "default")
 public class Test_Autonomous extends LinearOpMode {
@@ -19,7 +18,7 @@ public class Test_Autonomous extends LinearOpMode {
         waitForStart();
         sleep(100);
 
-        double leftSpeed = DifferentialDrive.getDifferentialPower(20);
+        double leftSpeed = DifferentialDrive.getDifferentialPower(60);
         robot.frontLeftWheel.setPower(leftSpeed);
         robot.backLeftWheel.setPower(leftSpeed);
         robot.frontRightWheel.setPower(1);

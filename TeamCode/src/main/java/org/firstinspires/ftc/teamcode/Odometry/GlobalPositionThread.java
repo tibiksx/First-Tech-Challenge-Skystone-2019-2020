@@ -1,18 +1,22 @@
 package org.firstinspires.ftc.teamcode.Odometry;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.teamcode.Misc.Encoder;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
 import java.io.File;
 
+
+@Disabled
 public class GlobalPositionThread implements Runnable {
 
 
-    private ExpansionHubMotor leftEncoder = null;
-    private ExpansionHubMotor rightEncoder = null;
-    private ExpansionHubMotor backEncoder = null;
+    private Encoder leftEncoder = null;
+    private Encoder rightEncoder = null;
+    private Encoder backEncoder = null;
 
     public static volatile boolean kill = false;
 
@@ -39,7 +43,7 @@ public class GlobalPositionThread implements Runnable {
     private File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelsData.txt");
     private File backEncoderOffsetFile = AppUtil.getInstance().getSettingsFile("backTicksFile.txt");
 
-    public GlobalPositionThread(ExpansionHubMotor backEncoder, ExpansionHubMotor leftEncoder, ExpansionHubMotor rightEncoder, double COUNTS_PER_INCH)
+    public GlobalPositionThread(Encoder backEncoder, Encoder leftEncoder, Encoder rightEncoder, double COUNTS_PER_INCH)
     {
         this.backEncoder = backEncoder;
         this.leftEncoder = leftEncoder;
@@ -52,9 +56,9 @@ public class GlobalPositionThread implements Runnable {
 
     private void PositionUpdate()
     {
-        backEncoderPosition = backEncoder.getCurrentPosition() * backEncoderSign;
-        leftEncoderPosition = leftEncoder.getCurrentPosition() * leftEncoderSign;
-        rightEncoderPosition = rightEncoder.getCurrentPosition() * rightEncoderSign;
+        backEncoderPosition = backEncoder.getPosition() * backEncoderSign;
+        leftEncoderPosition = leftEncoder.getPosition() * leftEncoderSign;
+        rightEncoderPosition = rightEncoder.getPosition() * rightEncoderSign;
 
         double deltaLeftPosition = leftEncoderPosition - prevLefEncoderPosition;
         double deltaRightPosition = rightEncoderPosition - prevRightEncoderPosition;
@@ -105,7 +109,7 @@ public class GlobalPositionThread implements Runnable {
             PositionUpdate();
             try
             {
-                Thread.currentThread().sleep(100);
+                Thread.sleep(100);
             }
             catch (InterruptedException e)
             {

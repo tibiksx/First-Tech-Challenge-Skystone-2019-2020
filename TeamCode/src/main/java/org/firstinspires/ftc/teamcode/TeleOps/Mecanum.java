@@ -5,52 +5,35 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import org.firstinspires.ftc.teamcode.Misc.Robot;
-import org.firstinspires.ftc.teamcode.Misc.UDP_Unicast_Server;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
 import org.firstinspires.ftc.teamcode.Misc.LifterMethods;
 
 import com.qualcomm.robotcore.util.Range;
 
 
-@TeleOp(name = "Test_TeleOp", group = "Pushbot")
+@TeleOp(name = "Main TeleOp", group = "Pushbot")
 public class Mecanum extends Robot {
 
-    final private float powerFraction = (float) 0.6;
+    private double powerCoeff = 1.0;
 
     private double posFound1 = 0.0, posFound2 = 0.0;
 
-    public UDP_Unicast_Server udpServer = null;
-
     public LifterThread lifterThread;
 
-    public enum LIFTER {
-        LOW,
-        FIRST,
-        SECOND,
-        THIRD,
-        FOURTH,
-        FIFTH,
-        SIXTH
-    }
-    public LIFTER currentState;
+    public LifterMethods.LIFTER currentState;
 
-    double oldPower = 0;
-    double newPower = 0;
-
-    public Telemetry.Item leftEncoderTicks = null;
-    public Telemetry.Item motorVelocity = null;
+    private double oldPower = 0;
+    private double newPower = 0;
 
     @Override
     public void init() {
         super.init();
-        if (usingDebugger) udpServer = new UDP_Unicast_Server(50000);
 
         lifterThread = new LifterThread(robot.lifter);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
         telemetry.setAutoClear(false);
-        leftEncoderTicks = telemetry.addData( "encoder Left:",leftEncoder.getPosition());
     }
 
     @Override
@@ -65,8 +48,16 @@ public class Mecanum extends Robot {
 
     @Override
     public void loop() {
-        /* TODO Optimize code with Expansion Hub Bulk Data */
+
         super.loop();
+
+        if (gamepad1.left_bumper && powerCoeff >= 0.2) {
+            powerCoeff -= 0.1;
+        } else if (gamepad1.right_bumper && powerCoeff <= 1) {
+            powerCoeff += 0.1;
+        }
+
+        powerCoeff = Range.clip(powerCoeff, 0.0, 1.0);
 
         float drive, turn, strafe;
 
@@ -74,48 +65,51 @@ public class Mecanum extends Robot {
         turn = gamepad1.right_stick_x;
         strafe = -gamepad1.left_stick_x;
 
-        double leftFrontPower = (Range.clip(drive + turn - strafe, -1.0, 1.0));
-        double leftBackPower = (Range.clip(drive + turn + strafe, -1.0, 1.0));
-        double rightFrontPower = (Range.clip(drive - turn + strafe, -1.0, 1.0));
-        double rightBackPower = (Range.clip(drive - turn - strafe, -1.0, 1.0));
+        // clip() = demands a number to be in certain bounds
+        // number is calculated and then processed
+        double leftFrontPower = Range.clip(drive + turn - strafe, -1.0, 1.0);
+        double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
+        double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
+        double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
-        robot.frontLeftWheel.setPower(powerFraction * leftFrontPower);
-        robot.frontRightWheel.setPower(powerFraction * rightFrontPower);
-        robot.backLeftWheel.setPower(powerFraction * leftBackPower);
-        robot.backRightWheel.setPower(powerFraction * rightBackPower);
-
-        if (controllerInputB.AOnce()){
-            posFound1 = 1;
-        }
-
-        if (controllerInputB.BOnce()) {
-            posFound1 = 0.3;
-        }
-
-        if (controllerInputB.XOnce()) {
-            posFound2 = 0;
-        }
-
-        if (controllerInputB.YOnce()) {
-            posFound2 = 0.55;
-        }
+        robot.frontLeftWheel.setPower(powerCoeff * leftFrontPower);
+        robot.frontRightWheel.setPower(powerCoeff * rightFrontPower);
+        robot.backLeftWheel.setPower(powerCoeff * leftBackPower);
+        robot.backRightWheel.setPower(powerCoeff * rightBackPower);
 
         if (gamepad1.a) {
             robot.flipper2.setPosition(1);
         }
 
-        if (controllerInputA.AOnce()) {
+        if (gamepad1.b) {
             robot.flipper2.setPosition(0);
         }
 
-        if (controllerInputA.XOnce()) {
+        if (gamepad1.x) {
             robot.flipper1.setPosition(0.90);
         }
 
-        if (controllerInputA.YOnce()) {
+        if (gamepad1.y) {
             robot.flipper1.setPosition(0.0);
         }
 
+        // move the foundation (servo positions)
+
+        if (gamepad2.y) {
+            posFound1 = 1;
+            posFound2 = 0;
+        }
+
+        if (gamepad2.a) {
+            posFound1 = 0.3;
+            posFound2 = 0.55;
+        }
+
+        // lifter and slider
+        robot.slider.setPower(gamepad2.left_stick_y);
+
+        robot.foundation1.setPosition(posFound1);
+        robot.foundation2.setPosition(posFound2);
 
         newPower = gamepad2.right_stick_y;
         if (newPower != oldPower && LifterThread.finished) {
@@ -124,21 +118,19 @@ public class Mecanum extends Robot {
         oldPower = newPower;
 
         if (controllerInputB.dpadUpOnce() && LifterThread.finished) {
-            LIFTER nextState = LifterMethods.getNextState(currentState);
+            LifterMethods.LIFTER nextState = LifterMethods.getNextState(currentState);
             lifterThread.setTicks(LifterMethods.getTicksFromState(nextState));
             currentState = nextState;
         }
 
         if (controllerInputB.dpadDownOnce() && LifterThread.finished) {
-            LIFTER previousState = LifterMethods.getPreviousState(currentState);
+            LifterMethods.LIFTER previousState = LifterMethods.getPreviousState(currentState);
             lifterThread.setTicks(LifterMethods.getTicksFromState(previousState));
             currentState = previousState;
         }
 
         robot.foundation1.setPosition(posFound1);
         robot.foundation2.setPosition(posFound2);
-
-        leftEncoderTicks.setValue(leftEncoder.getPosition());
 
     }
 

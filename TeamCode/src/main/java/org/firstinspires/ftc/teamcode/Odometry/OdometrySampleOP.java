@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode.Odometry;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.Misc.Constants;
 import org.firstinspires.ftc.teamcode.Misc.Robot;
 
+@Disabled
+@TeleOp(name="Sample Op Odometry", group = "Odometry")
 public class OdometrySampleOP extends Robot {
-
-    final double COUNTS_PER_INCH = 100;
 
     GlobalPositionThread globalPositionThread;
     Thread positionThread;
@@ -14,8 +17,8 @@ public class OdometrySampleOP extends Robot {
     public void init() {
         super.init();
 
-        globalPositionThread = new GlobalPositionThread(robot.backEncoderMotor,robot.leftEncoderMotor
-                ,robot.rightEncoderMotor,COUNTS_PER_INCH);
+        globalPositionThread = new GlobalPositionThread(backEncoder,leftEncoder,
+                rightEncoder, Constants.COUNTS_PER_INCH);
         positionThread = new Thread(globalPositionThread);
         positionThread.start();
 

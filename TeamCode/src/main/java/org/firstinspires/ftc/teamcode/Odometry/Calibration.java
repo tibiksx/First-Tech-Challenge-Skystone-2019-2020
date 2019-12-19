@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Odometry;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -9,17 +10,18 @@ import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
+import org.firstinspires.ftc.teamcode.Misc.Constants;
 
 import java.io.File;
 
+@Disabled
 @TeleOp(name="Odometry Calibration", group = "Odometry")
 public class Calibration extends LinearOpMode {
 
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
-    final double pivotSpeed = 0.5;
-    final double TICSK_PER_INCH = 100;
+    final double pivotSpeed = .5;
     double backTicksOffset = 0;
 
     File wheelsData = AppUtil.getInstance().getSettingsFile("wheelsData.txt");
@@ -32,6 +34,7 @@ public class Calibration extends LinearOpMode {
     @Override
     public void runOpMode(){
 
+        timer = new ElapsedTime();
         robot.init(hardwareMap);
 
         imu = hardwareMap.get(BNO055IMU.class,"imu");
@@ -47,8 +50,6 @@ public class Calibration extends LinearOpMode {
 
         while(getZAngle() < 90 && opModeIsActive())
         {
-
-
             if(getZAngle() < 60)
             {
                 robot.frontRightWheel.setPower(-pivotSpeed);
@@ -81,11 +82,11 @@ public class Calibration extends LinearOpMode {
 
         double angle = getZAngle();
 
-        /* TODO Check encoder reversal */
+        /* TODO Check encoder reversal */ //Might not be needed because of the reverse method
         double encoderDifference = Math.abs(robot.leftEncoderMotor.getCurrentPosition()) +
                 (Math.abs(robot.rightEncoderMotor.getCurrentPosition()));
         double backOffsetPerDeg = encoderDifference/angle;
-        double wheelBaseSeparation = (2 * 90 * backOffsetPerDeg)/(Math.PI*TICSK_PER_INCH);
+        double wheelBaseSeparation = (2 * 90 * backOffsetPerDeg)/(Math.PI * Constants.COUNTS_PER_INCH);
         backTicksOffset = robot.backEncoderMotor.getCurrentPosition()/Math.toRadians(getZAngle());
 
         ReadWriteFile.writeFile(wheelsData,String.valueOf(wheelBaseSeparation));
@@ -96,7 +97,7 @@ public class Calibration extends LinearOpMode {
             telemetry.addData("Odometry Constants"," Calculated");
             telemetry.addData("Wheel Base Separation: ",wheelBaseSeparation);
             telemetry.addData("Back Encoder Offset: ",backTicksOffset);
-            telemetry.addData("Constants saved","successfully");
+            telemetry.addData("Constants saved ","successfully");
             telemetry.update();
         }
 

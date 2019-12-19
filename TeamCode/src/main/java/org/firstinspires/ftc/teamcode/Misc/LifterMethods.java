@@ -1,45 +1,53 @@
 package org.firstinspires.ftc.teamcode.Misc;
 
-import org.firstinspires.ftc.teamcode.TeleOps.Mecanum;
-
 public class LifterMethods {
 
-    public static Mecanum.LIFTER getNextState(Mecanum.LIFTER currentState) {
+    public enum LIFTER {
+        LOW,
+        FIRST,
+        SECOND,
+        THIRD,
+        FOURTH,
+        FIFTH,
+        SIXTH
+    }
+
+    public static LIFTER getNextState(LIFTER currentState) {
         switch (currentState) {
             case LOW:
-                return Mecanum.LIFTER.FIRST;
+                return LIFTER.FIRST;
             case FIRST:
-                return Mecanum.LIFTER.SECOND;
+                return LIFTER.SECOND;
             case SECOND:
-                return Mecanum.LIFTER.THIRD;
+                return LIFTER.THIRD;
             case THIRD:
-                return Mecanum.LIFTER.FOURTH;
+                return LIFTER.FOURTH;
             case FOURTH:
-                return Mecanum.LIFTER.FIFTH;
+                return LIFTER.FIFTH;
             case FIFTH:
-                return Mecanum.LIFTER.SIXTH;
+                return LIFTER.SIXTH;
         }
         return currentState;
     }
-    public static Mecanum.LIFTER getPreviousState(Mecanum.LIFTER currentState) {
+    public static LIFTER getPreviousState(LIFTER currentState) {
         switch (currentState) {
             case FIRST:
-                return Mecanum.LIFTER.LOW;
+                return LIFTER.LOW;
             case SECOND:
-                return Mecanum.LIFTER.FIRST;
+                return LIFTER.FIRST;
             case THIRD:
-                return Mecanum.LIFTER.SECOND;
+                return LIFTER.SECOND;
             case FOURTH:
-                return Mecanum.LIFTER.THIRD;
+                return LIFTER.THIRD;
             case FIFTH:
-                return Mecanum.LIFTER.FOURTH;
+                return LIFTER.FOURTH;
             case SIXTH:
-                return Mecanum.LIFTER.FIFTH;
+                return LIFTER.FIFTH;
         }
         return currentState;
     }
 
-    public static int getTicksFromState(Mecanum.LIFTER currentState) {
+    public static int getTicksFromState(LIFTER currentState) {
         switch (currentState) {
             case LOW:
                 return 500;

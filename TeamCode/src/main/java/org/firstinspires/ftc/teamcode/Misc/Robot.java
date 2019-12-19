@@ -9,25 +9,21 @@ import org.openftc.revextensions2.RevBulkData;
 
 public class Robot extends OpMode {
 
-    public boolean usingDebugger = false; //for debugging using UDP Unicast
 
 
-    public ControllerInput controllerInputA;
-    public ControllerInput controllerInputB;
+    protected ControllerInput controllerInputA;
+    protected ControllerInput controllerInputB;
 
-    public Hardware robot = null;
+    protected Hardware robot = null;
 
-    public ComputerDebugging computerDebugging;
+    protected Encoder rightEncoder = null;
+    protected Encoder leftEncoder = null;
+    protected Encoder backEncoder = null;
 
-    public ExpansionHubEx revMaster = null;
-    public ExpansionHubEx revSlave = null;
-
-
-    protected final int TICKS_PER_REV = 1600;
-
-    public Encoder rightEncoder = null;
-    public Encoder leftEncoder = null;
-    public Encoder backEncoder = null;
+    protected ExpansionHubEx revSlave = null;
+    protected ExpansionHubEx revMaster = null;
+    protected RevBulkData slaveBulkData = null;
+    protected RevBulkData masterBulkData = null;
 
     @Override
     public void init() {
@@ -35,27 +31,19 @@ public class Robot extends OpMode {
         controllerInputA = new ControllerInput(gamepad1);
         controllerInputB = new ControllerInput(gamepad2);
 
-        computerDebugging = new ComputerDebugging();
+        revMaster = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 1");
+        revSlave = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 2");
+
+        slaveBulkData = revSlave.getBulkInputData();
+        masterBulkData = revMaster.getBulkInputData();
 
         robot = new Hardware();
         robot.init(hardwareMap);
 
-        revMaster = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 1");
-        revSlave = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 2");
+        leftEncoder = new Encoder(robot.leftEncoderMotor);
+        //backEncoder = new Encoder(robot.backEncoderMotor);
+        //rightEncoder = new Encoder(robot.rightEncoderMotor);
 
-        leftEncoder = new Encoder(robot.leftEncoderMotor,TICKS_PER_REV);
-//        backEncoder = new Encoder(robot.backEncoderMotor,ticksPerRev);
-//        rightEncoder = new Encoder(robot.rightEncoderMotor, ticksPerRev);
-
-    }
-
-    @Override
-    public void init_loop(){
-
-    }
-
-    @Override
-    public void start(){
 
         robot.frontLeftWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
         robot.frontRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
@@ -63,14 +51,20 @@ public class Robot extends OpMode {
         robot.backRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
 
         robot.lifter.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
+
     }
 
     @Override
     public void loop()
     {
-        //computerDebugging.markEndOfUpdate();
         controllerInputB.update();
         controllerInputA.update();
+
+        slaveBulkData = revSlave.getBulkInputData();
+        masterBulkData = revMaster.getBulkInputData();
+
+        leftEncoder.updateEncoder(masterBulkData.getMotorCurrentPosition(robot.leftEncoderMotor));
+
     }
 
     @Override
