@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.utils.ControllerInput;
+import org.firstinspires.ftc.teamcode.utils.LifterThread;
 
 @TeleOp(name="Pushbot: Teleop", group="Pushbot")
 
@@ -44,6 +46,10 @@ public class PushbotTeleop extends OpMode {
     public Telemetry.Item lifterTicks;
     public Telemetry.Item lifterLevel;
 
+    public Telemetry.Item leftEncoder;
+    public Telemetry.Item rightEncoder;
+    public Telemetry.Item backEncoder;
+
     @Override
     public void init() {
 
@@ -57,20 +63,25 @@ public class PushbotTeleop extends OpMode {
         robot.backLeftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         robot.backRightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        robot.lifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        robot.lifter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        robot.lifter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         currentState = LIFTER.LOW;
 
-        lifterThread = new LifterThread(robot.lifter);
+        lifterThread = new LifterThread(robot.lifter1, robot.lifter2);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
 
         telemetry.setAutoClear(false);
         state = telemetry.addData("nivel:",currentState);
-        lifterTicks = telemetry.addData("ticks uri:", robot.lifter.getCurrentPosition());
+        lifterTicks = telemetry.addData("ticks uri:", robot.lifter1.getCurrentPosition());
         threadState = telemetry.addData("stare thread", LifterThread.finished);
         lifterLevel = telemetry.addData("level:", level[i]);
+
+        leftEncoder = telemetry.addData("left encoder @ ", getEncoderPosition('l'));
+        rightEncoder = telemetry.addData("right encoder @ ", getEncoderPosition('r'));
+        backEncoder = telemetry.addData("back encoder @ ", getEncoderPosition('b'));
     }
 
     @Override
@@ -87,10 +98,10 @@ public class PushbotTeleop extends OpMode {
     @Override
     public void loop() {
 
-        if (gamepad1.left_bumper && coeff >= 0.2) {
-            coeff -= 0.1;
-        } else if (gamepad1.right_bumper && coeff <= 1) {
-            coeff += 0.1;
+        if (controllerInputA.leftBumperOnce() && coeff > 0.2) {
+            coeff -= 0.2;
+        } else if (controllerInputA.rightBumperOnce() && coeff <= 1) {
+            coeff += 0.2;
         }
 
         coeff = Range.clip(coeff, 0.0, 1.0);
@@ -154,7 +165,8 @@ public class PushbotTeleop extends OpMode {
         newPower = gamepad2.right_stick_y;
 
         if(newPower != oldPower) {
-            robot.lifter.setPower(newPower);
+            robot.lifter1.setPower(newPower);
+            robot.lifter2.setPower(newPower);
         }
         oldPower = newPower;
 
@@ -179,8 +191,13 @@ public class PushbotTeleop extends OpMode {
             lifterThread.setTicks(getTicksFromState(level[i]));
         }
 
-        lifterTicks.setValue(robot.lifter.getCurrentPosition());
+        lifterTicks.setValue(robot.lifter1.getCurrentPosition());
         lifterLevel.setValue(level[i]);
+
+        leftEncoder.setValue(getEncoderPosition('l'));
+        rightEncoder.setValue(getEncoderPosition('r'));
+        backEncoder.setValue(getEncoderPosition('b'));
+
         telemetry.update();
 
         controllerInputA.update();
@@ -212,5 +229,16 @@ public class PushbotTeleop extends OpMode {
         return -1; //code should never reach here. Yes, this function sucks...
     }
 
+    int getEncoderPosition(char encoderInitial) {
 
+        if (encoderInitial == 'l') {
+            return robot.frontLeftWheel.getCurrentPosition();
+        } else if (encoderInitial == 'r') {
+            return robot.frontRightWheel.getCurrentPosition();
+        } else if (encoderInitial == 'b') {
+            return robot.backLeftWheel.getCurrentPosition();
+        } else {
+            return 666;
+        }
+    }
 }
