@@ -5,35 +5,47 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import org.firstinspires.ftc.teamcode.Misc.Robot;
-import org.firstinspires.ftc.teamcode.Threads.LifterThread;
 import org.firstinspires.ftc.teamcode.Misc.LifterMethods;
+import org.firstinspires.ftc.teamcode.Threads.LifterThreadPID;
 
 import com.qualcomm.robotcore.util.Range;
 
+import static org.firstinspires.ftc.teamcode.Misc.LifterMethods.LIFTER.LOW;
+
+/**
+ * Main TeleOp
+ */
 
 @TeleOp(name = "Main TeleOp", group = "Pushbot")
 public class Mecanum extends Robot {
 
     private double powerCoeff = 1.0;
 
-    private double posFound1 = 0.0, posFound2 = 0.0;
-
-    public LifterThread lifterThread;
+    public LifterThreadPID lifterThread;
 
     public LifterMethods.LIFTER currentState;
 
-    private double oldPower = 0;
-    private double newPower = 0;
+    private double lifterOldPower = 0;
+    private double lifterNewPower = 0;
+
+    private Telemetry.Item leftEncoderTelemetry= null;
+    private Telemetry.Item rightEncoderTelemetry = null;
+    private Telemetry.Item backEncoderTelemetry = null;
 
     @Override
     public void init() {
         super.init();
 
-        lifterThread = new LifterThread(robot.lifter);
+
+        currentState = LOW;
+        lifterThread = new LifterThreadPID(robot.leftLifter, robot.rightLifter);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
         telemetry.setAutoClear(false);
+        leftEncoderTelemetry = telemetry.addData("Left: ",0);
+        rightEncoderTelemetry = telemetry.addData("Right: ",0 );
+        backEncoderTelemetry = telemetry.addData("Back: ",0);
     }
 
     @Override
@@ -77,60 +89,29 @@ public class Mecanum extends Robot {
         robot.backLeftWheel.setPower(powerCoeff * leftBackPower);
         robot.backRightWheel.setPower(powerCoeff * rightBackPower);
 
-        if (gamepad1.a) {
-            robot.flipper2.setPosition(1);
+        lifterNewPower = gamepad2.right_stick_y;
+        if (lifterNewPower != lifterOldPower && LifterThreadPID.finished) {
+            robot.leftLifter.setPower(-lifterNewPower);
+            robot.rightLifter.setPower(-lifterNewPower);
         }
+        lifterOldPower = lifterNewPower;
 
-        if (gamepad1.b) {
-            robot.flipper2.setPosition(0);
-        }
-
-        if (gamepad1.x) {
-            robot.flipper1.setPosition(0.90);
-        }
-
-        if (gamepad1.y) {
-            robot.flipper1.setPosition(0.0);
-        }
-
-        // move the foundation (servo positions)
-
-        if (gamepad2.y) {
-            posFound1 = 1;
-            posFound2 = 0;
-        }
-
-        if (gamepad2.a) {
-            posFound1 = 0.3;
-            posFound2 = 0.55;
-        }
-
-        // lifter and slider
-        robot.slider.setPower(gamepad2.left_stick_y);
-
-        robot.foundation1.setPosition(posFound1);
-        robot.foundation2.setPosition(posFound2);
-
-        newPower = gamepad2.right_stick_y;
-        if (newPower != oldPower && LifterThread.finished) {
-            robot.lifter.setPower(-newPower);
-        }
-        oldPower = newPower;
-
-        if (controllerInputB.dpadUpOnce() && LifterThread.finished) {
+        if (controllerInputB.dpadUpOnce() && LifterThreadPID.finished) {
             LifterMethods.LIFTER nextState = LifterMethods.getNextState(currentState);
             lifterThread.setTicks(LifterMethods.getTicksFromState(nextState));
             currentState = nextState;
         }
 
-        if (controllerInputB.dpadDownOnce() && LifterThread.finished) {
+        if (controllerInputB.dpadDownOnce() && LifterThreadPID.finished) {
             LifterMethods.LIFTER previousState = LifterMethods.getPreviousState(currentState);
             lifterThread.setTicks(LifterMethods.getTicksFromState(previousState));
             currentState = previousState;
         }
 
-        robot.foundation1.setPosition(posFound1);
-        robot.foundation2.setPosition(posFound2);
+        leftEncoderTelemetry.setValue("%.3f",leftEncoder.getDistance());
+        rightEncoderTelemetry.setValue("%.3f",rightEncoder.getDistance());
+        backEncoderTelemetry.setValue("%.3f",backEncoder.getDistance());
+        telemetry.update();
 
     }
 

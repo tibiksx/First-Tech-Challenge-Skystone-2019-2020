@@ -2,10 +2,9 @@ package org.firstinspires.ftc.teamcode.Threads;
 
 import android.os.SystemClock;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.openftc.revextensions2.ExpansionHubMotor;
+@Deprecated
 public class MotorThread implements Runnable {
 
 

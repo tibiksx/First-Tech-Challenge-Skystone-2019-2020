@@ -5,11 +5,12 @@ import android.os.SystemClock;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
 /**
- * Thread running in background which controls the lifter. It is very useful
- * as it allows for multiple commands at the same time.
+ * @deprecated at the moment
  */
 
-public class LifterThread implements Runnable {
+@Deprecated
+public class LifterThreadPID implements Runnable {
+
     public static volatile boolean kill = false;
     private long lastMillis = 0;
     private volatile int currentTicks = 0;
@@ -17,10 +18,10 @@ public class LifterThread implements Runnable {
 
     public static volatile boolean finished = true;
 
-    public ExpansionHubMotor leftLifter;
     public ExpansionHubMotor rightLifter;
+    public ExpansionHubMotor leftLifter;
 
-    public LifterThread(ExpansionHubMotor leftLifter, ExpansionHubMotor rightLifter) {
+    public LifterThreadPID(ExpansionHubMotor leftLifter, ExpansionHubMotor rightLifter) {
         this.leftLifter = leftLifter;
         this.rightLifter = rightLifter;
     }
@@ -28,35 +29,35 @@ public class LifterThread implements Runnable {
     @Override
     public void run() {
         while (!kill) {
-
             //never run too fast
             if (SystemClock.uptimeMillis() - lastMillis < 100) {
                 continue;
             }
+
             //set the last send time
             lastMillis = SystemClock.uptimeMillis();
 
             if (currentTicks != lastTicks) //we can move the motor to the new value
             {
                 finished = false;
-                double startTime = SystemClock.uptimeMillis();
+                leftLifter.setTargetPosition(currentTicks);
+                leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
 
+                leftLifter.setPower(1);
+                rightLifter.setPower(1);
                 if (leftLifter.getCurrentPosition() < currentTicks) {
-                    leftLifter.setPower(1);
-                    rightLifter.setPower(1);
-                    while (leftLifter.getCurrentPosition() < currentTicks) {
+                    while (leftLifter.getCurrentPosition() < leftLifter.getTargetPosition()) {
 
                     }
                 } else {
-                    leftLifter.setPower(-1);
-                    rightLifter.setPower(-1);
-                    while (leftLifter.getCurrentPosition() > currentTicks) {
+                    while (leftLifter.getCurrentPosition() > leftLifter.getTargetPosition()) {
+
                     }
                 }
-
-                finished = true;
                 leftLifter.setPower(0);
                 rightLifter.setPower(0);
+                finished = true;
+                leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
             }
 
             lastTicks = currentTicks;

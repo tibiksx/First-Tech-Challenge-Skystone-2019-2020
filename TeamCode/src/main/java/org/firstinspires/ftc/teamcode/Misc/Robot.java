@@ -3,12 +3,16 @@ package org.firstinspires.ftc.teamcode.Misc;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
-import org.openftc.revextensions2.ExpansionHubEx;
+
 import org.openftc.revextensions2.ExpansionHubMotor;
-import org.openftc.revextensions2.RevBulkData;
+
+/**
+ *  This is the baseline for all IterativeOpModes. This is the only class that extends from
+ *  OpMode and it allows for quick creation of new OpModes and hides away some initializing,
+ *  making code much easier to work with and understand.
+ */
 
 public class Robot extends OpMode {
-
 
 
     protected ControllerInput controllerInputA;
@@ -20,51 +24,39 @@ public class Robot extends OpMode {
     protected Encoder leftEncoder = null;
     protected Encoder backEncoder = null;
 
-    protected ExpansionHubEx revSlave = null;
-    protected ExpansionHubEx revMaster = null;
-    protected RevBulkData slaveBulkData = null;
-    protected RevBulkData masterBulkData = null;
-
     @Override
     public void init() {
 
         controllerInputA = new ControllerInput(gamepad1);
         controllerInputB = new ControllerInput(gamepad2);
 
-        revMaster = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 1");
-        revSlave = hardwareMap.get(ExpansionHubEx.class,"Expansion Hub 2");
-
-        slaveBulkData = revSlave.getBulkInputData();
-        masterBulkData = revMaster.getBulkInputData();
-
         robot = new Hardware();
         robot.init(hardwareMap);
 
         leftEncoder = new Encoder(robot.leftEncoderMotor);
-        //backEncoder = new Encoder(robot.backEncoderMotor);
-        //rightEncoder = new Encoder(robot.rightEncoderMotor);
+        backEncoder = new Encoder(robot.backEncoderMotor);
+        rightEncoder = new Encoder(robot.rightEncoderMotor);
+
+        leftEncoder.updateEncoder();
+        rightEncoder.updateEncoder();
+        backEncoder.updateEncoder();
 
 
-        robot.frontLeftWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
-        robot.frontRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
-        robot.backLeftWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
-        robot.backRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
-
-        robot.lifter.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.FLOAT);
+        robot.frontLeftWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.BRAKE);
+        robot.frontRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.BRAKE);
+        robot.backLeftWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.BRAKE);
+        robot.backRightWheel.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.BRAKE);
 
     }
 
     @Override
-    public void loop()
-    {
+    public void loop() {
         controllerInputB.update();
         controllerInputA.update();
 
-        slaveBulkData = revSlave.getBulkInputData();
-        masterBulkData = revMaster.getBulkInputData();
-
-        leftEncoder.updateEncoder(masterBulkData.getMotorCurrentPosition(robot.leftEncoderMotor));
-
+        leftEncoder.updateEncoder();
+        rightEncoder.updateEncoder();
+        backEncoder.updateEncoder();
     }
 
     @Override
