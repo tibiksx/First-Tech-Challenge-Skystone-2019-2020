@@ -4,9 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
-
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.Hardware;
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import java.io.File;
 
@@ -19,10 +18,10 @@ public class OdometryCalibration extends LinearOpMode {
 
     Hardware robot = new Hardware();
 
-    final double PIVOT_SPEED = 0.5;
+    final double PIVOT_SPEED = 0.4;
 
     //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
-    final double COUNTS_PER_INCH = 259.86681;
+    final double COUNTS_PER_INCH = 1600 / (Math.PI * 1.96);
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -81,13 +80,13 @@ public class OdometryCalibration extends LinearOpMode {
         Since the left encoder is also mapped to a drive motor, the encoder value needs to be reversed with the negative sign in front
         THIS MAY NEED TO BE CHANGED FOR EACH ROBOT
        */
-        double encoderDifference = Math.abs(robot.verticalLeft.getCurrentPosition()) + (Math.abs(robot.verticalRight.getCurrentPosition()));
+        double encoderDifference = Math.abs(robot.verticalLeft.getCurrentPosition() - robot.verticalRight.getCurrentPosition());
 
-        double verticalEncoderTickOffsetPerDegree = encoderDifference/angle;
+        double verticalEncoderTickOffsetPerDegree = encoderDifference / angle;
 
-        double wheelBaseSeparation = (2*90*verticalEncoderTickOffsetPerDegree)/(Math.PI*COUNTS_PER_INCH);
+        double wheelBaseSeparation = (180 * verticalEncoderTickOffsetPerDegree)/(Math.PI*COUNTS_PER_INCH);
 
-        horizontalTickOffset = robot.horizontal.getCurrentPosition()/Math.toRadians(getZAngle());
+        horizontalTickOffset = robot.horizontal.getCurrentPosition()/getZAngle();
 
         //Write the constants to text files
         ReadWriteFile.writeFile(wheelBaseSeparationFile, String.valueOf(wheelBaseSeparation));
@@ -101,7 +100,7 @@ public class OdometryCalibration extends LinearOpMode {
 
             //Display raw values
             telemetry.addData("IMU Angle", getZAngle());
-            telemetry.addData("Vertical Left Position", -robot.verticalLeft.getCurrentPosition());
+            telemetry.addData("Vertical Left Position", robot.verticalLeft.getCurrentPosition());
             telemetry.addData("Vertical Right Position", robot.verticalRight.getCurrentPosition());
             telemetry.addData("Horizontal Position", robot.horizontal.getCurrentPosition());
             telemetry.addData("Vertical Encoder Offset", verticalEncoderTickOffsetPerDegree);
@@ -134,3 +133,5 @@ public class OdometryCalibration extends LinearOpMode {
     }
 
 }
+
+

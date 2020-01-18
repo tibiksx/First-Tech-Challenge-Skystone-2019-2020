@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.utils;
 import android.os.SystemClock;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.util.Range;
 
 public class LifterThread implements Runnable {
 
@@ -15,6 +17,7 @@ public class LifterThread implements Runnable {
 
     public DcMotor lifter1;
     public DcMotor lifter2;
+    public DigitalChannel magnet;
 
     public LifterThread(DcMotor lifter1, DcMotor lifter2) {
         this.lifter1 = lifter1;
@@ -42,7 +45,7 @@ public class LifterThread implements Runnable {
 
                 if (currentTicks < lifter1.getCurrentPosition()) {
                     lifter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    lifter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    lifter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
                     finished = false;
 
@@ -50,12 +53,10 @@ public class LifterThread implements Runnable {
                     lifter2.setPower(-1);
 
                     while(lifter1.getCurrentPosition() > Math.abs(currentTicks)) {
-                        if (lifter1.getCurrentPosition() - Math.abs(currentTicks) < 450) {
-                            lifter1.setPower(-(lifter1.getCurrentPosition() - (double)Math.abs(currentTicks) / 100));
-                            lifter2.setPower(-(lifter1.getCurrentPosition() - (double)Math.abs(currentTicks) / 100));
-                        }
 
-                        if (lifter1.getCurrentPosition() - Math.abs(currentTicks) < 500)
+                        lifter1.setPower(-Math.cos(Math.toRadians(Range.scale(lifter1.getCurrentPosition(), lastTicks, currentTicks, 0, 90))));
+
+                        if (lifter1.getCurrentPosition() - Math.abs(currentTicks) < 200)
                             break;
                     }
 
@@ -67,7 +68,7 @@ public class LifterThread implements Runnable {
                 } else {
 
                     lifter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    lifter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    lifter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
                     finished = false;
 
@@ -76,13 +77,16 @@ public class LifterThread implements Runnable {
 
                     while(lifter1.getCurrentPosition() < Math.abs(currentTicks)) {
 
-                        if (Math.abs(currentTicks) - lifter1.getCurrentPosition() < 100) {
-                            lifter1.setPower((Math.abs(currentTicks) - lifter1.getCurrentPosition()) / 100);
-                            lifter2.setPower((Math.abs(currentTicks) - lifter1.getCurrentPosition()) / 100);
-                        }
+                        lifter1.setPower(Math.cos(Math.toRadians(Range.scale(lifter1.getCurrentPosition(), lastTicks, currentTicks, 0, 90))));
 
-                        if (Math.abs(currentTicks) - lifter1.getCurrentPosition() < 30)
+                        if (Math.abs(currentTicks) - lifter1.getCurrentPosition() < 200)
                             break;
+
+                        if (currentTicks == 0) {
+                            if (magnet.getState()) {
+                                break;
+                            }
+                        }
                     }
 
                     finished = true;
@@ -104,4 +108,5 @@ public class LifterThread implements Runnable {
     public void setTicks(int ticks){
         this.currentTicks = ticks;
     }
+
 }

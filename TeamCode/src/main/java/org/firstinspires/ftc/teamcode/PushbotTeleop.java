@@ -14,7 +14,6 @@ import org.firstinspires.ftc.teamcode.utils.LifterThread;
 
 public class PushbotTeleop extends OpMode {
 
-    // Created a hardware object, named "robot"
     Hardware robot = new Hardware();
 
     double posFound1 = 0.0, posFound2 = 0.0;
@@ -124,43 +123,7 @@ public class PushbotTeleop extends OpMode {
         robot.backLeftWheel.setPower(coeff * leftBackPower);
         robot.backRightWheel.setPower(coeff * rightBackPower);
 
-        // flipers
-
-//        if (gamepad1.a) {
-//            robot.fliper2.setPosition(1);
-//        }
-//
-//        if (gamepad1.b) {
-//            robot.fliper2.setPosition(0);
-//        }
-//
-//        if (gamepad1.x) {
-//            robot.fliper1.setPosition(0.90);
-//        }
-//
-//        if (gamepad1.y) {
-//            robot.fliper1.setPosition(0.0);
-//        }
-
-        // move the foundation (servo positions)
-
-        if (gamepad2.y) {
-            posFound1 = 1;
-            posFound2 = 0;
-        }
-
-        if (gamepad2.a) {
-            posFound1 = 0.3;
-            posFound2 = 0.55;
-        }
-
-//        // lifter and slider
-//        robot.slider.setPower(gamepad2.left_stick_y);
-//
-//        robot.foundation1.setPosition(posFound1);
-//        robot.foundation2.setPosition(posFound2);
-
-        //////////////////////
+        /////// LIFTER ///////
 
         newPower = gamepad2.right_stick_y;
 
@@ -242,3 +205,5 @@ public class PushbotTeleop extends OpMode {
         }
     }
 }
+
+

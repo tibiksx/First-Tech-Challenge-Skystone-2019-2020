@@ -12,31 +12,26 @@ import java.io.File;
  * Modified and implemented by Tiberiu Ureche on 12/01/2020.
  */
 public class OdometryGlobalCoordinatePosition implements Runnable{
-    //Odometry wheels
+
     private DcMotor verticalEncoderLeft, verticalEncoderRight, horizontalEncoder;
 
-    //Thead run condition
-    private boolean isRunning = true;
+    public boolean isRunning = true;
 
-    //Position variables used for storage and calculations
-    double verticalRightEncoderWheelPosition = 0, verticalLeftEncoderWheelPosition = 0, normalEncoderWheelPosition = 0,  changeInRobotOrientation = 0;
-    private double robotGlobalXCoordinatePosition = 0, robotGlobalYCoordinatePosition = 0, robotOrientationRadians = 0;
-    private double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
+    public double verticalRightEncoderWheelPosition = 0, verticalLeftEncoderWheelPosition = 0, normalEncoderWheelPosition = 0,  changeInRobotOrientation = 0;
+    public double robotGlobalXCoordinatePosition = 0, robotGlobalYCoordinatePosition = 0, robotOrientationRadians = 0;
+    public double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
 
-    //Algorithm constants
-    private double robotEncoderWheelDistance;
-    private double horizontalEncoderTickPerDegreeOffset;
+    public double robotEncoderWheelDistance;
+    public double horizontalEncoderTickPerDegreeOffset;
 
-    //Sleep time interval (milliseconds) for the position update thread
-    private int sleepTime;
+    public int sleepTime;
 
-    //Files to access the algorithm constants
-    private File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
-    private File horizontalTickOffsetFile = AppUtil.getInstance().getSettingsFile("horizontalTickOffset.txt");
+    public File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
+    public File horizontalTickOffsetFile = AppUtil.getInstance().getSettingsFile("horizontalTickOffset.txt");
 
-    private int verticalLeftEncoderPositionMultiplier = 1;
-    private int verticalRightEncoderPositionMultiplier = 1;
-    private int normalEncoderPositionMultiplier = 1;
+    public int verticalLeftEncoderPositionMultiplier = 1;
+    public int verticalRightEncoderPositionMultiplier = 1;
+    public int normalEncoderPositionMultiplier = 1;
 
     /**
      * Constructor for GlobalCoordinatePosition Thread
@@ -59,7 +54,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     /**
      * Updates the global (x, y, theta) coordinate position of the robot using the odometry encoders
      */
-    private void globalCoordinatePositionUpdate(){
+    public void globalCoordinatePositionUpdate(){
         //Get Current Positions
         verticalLeftEncoderWheelPosition = (verticalEncoderLeft.getCurrentPosition() * verticalLeftEncoderPositionMultiplier);
         verticalRightEncoderWheelPosition = (verticalEncoderRight.getCurrentPosition() * verticalRightEncoderPositionMultiplier);
@@ -150,3 +145,5 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         }
     }
 }
+
+
