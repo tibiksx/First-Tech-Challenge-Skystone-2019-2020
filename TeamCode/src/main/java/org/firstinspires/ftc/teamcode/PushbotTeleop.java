@@ -63,19 +63,19 @@ public class PushbotTeleop extends OpMode {
         robot.backLeftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         robot.backRightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        robot.lifter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        robot.lifter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        robot.lifterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        robot.lifterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         currentState = LIFTER.LOW;
 
-        lifterThread = new LifterThread(robot.lifter1, robot.lifter2);
+        lifterThread = new LifterThread(robot.lifterLeft, robot.lifterRight);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
 
         telemetry.setAutoClear(false);
         state = telemetry.addData("nivel:",currentState);
-        lifterTicks = telemetry.addData("ticks uri:", robot.lifter1.getCurrentPosition());
+        lifterTicks = telemetry.addData("ticks uri:", robot.lifterLeft.getCurrentPosition());
         threadState = telemetry.addData("stare thread", LifterThread.finished);
         lifterLevel = telemetry.addData("level:", level[i]);
 
@@ -126,21 +126,21 @@ public class PushbotTeleop extends OpMode {
 
         // flipers
 
-        if (gamepad1.a) {
-            robot.fliper2.setPosition(1);
-        }
-
-        if (gamepad1.b) {
-            robot.fliper2.setPosition(0);
-        }
-
-        if (gamepad1.x) {
-            robot.fliper1.setPosition(0.90);
-        }
-
-        if (gamepad1.y) {
-            robot.fliper1.setPosition(0.0);
-        }
+//        if (gamepad1.a) {
+//            robot.fliper2.setPosition(1);
+//        }
+//
+//        if (gamepad1.b) {
+//            robot.fliper2.setPosition(0);
+//        }
+//
+//        if (gamepad1.x) {
+//            robot.fliper1.setPosition(0.90);
+//        }
+//
+//        if (gamepad1.y) {
+//            robot.fliper1.setPosition(0.0);
+//        }
 
         // move the foundation (servo positions)
 
@@ -154,19 +154,19 @@ public class PushbotTeleop extends OpMode {
             posFound2 = 0.55;
         }
 
-        // lifter and slider
-        robot.slider.setPower(gamepad2.left_stick_y);
-
-        robot.foundation1.setPosition(posFound1);
-        robot.foundation2.setPosition(posFound2);
+//        // lifter and slider
+//        robot.slider.setPower(gamepad2.left_stick_y);
+//
+//        robot.foundation1.setPosition(posFound1);
+//        robot.foundation2.setPosition(posFound2);
 
         //////////////////////
 
         newPower = gamepad2.right_stick_y;
 
         if(newPower != oldPower) {
-            robot.lifter1.setPower(newPower);
-            robot.lifter2.setPower(newPower);
+            robot.lifterLeft.setPower(newPower);
+            robot.lifterRight.setPower(newPower);
         }
         oldPower = newPower;
 
@@ -191,7 +191,7 @@ public class PushbotTeleop extends OpMode {
             lifterThread.setTicks(getTicksFromState(level[i]));
         }
 
-        lifterTicks.setValue(robot.lifter1.getCurrentPosition());
+        lifterTicks.setValue(robot.lifterLeft.getCurrentPosition());
         lifterLevel.setValue(level[i]);
 
         leftEncoder.setValue(getEncoderPosition('l'));
@@ -232,11 +232,11 @@ public class PushbotTeleop extends OpMode {
     int getEncoderPosition(char encoderInitial) {
 
         if (encoderInitial == 'l') {
-            return robot.frontLeftWheel.getCurrentPosition();
+            return robot.verticalLeft.getCurrentPosition();
         } else if (encoderInitial == 'r') {
-            return robot.frontRightWheel.getCurrentPosition();
+            return robot.verticalRight.getCurrentPosition();
         } else if (encoderInitial == 'b') {
-            return robot.backLeftWheel.getCurrentPosition();
+            return robot.horizontal.getCurrentPosition();
         } else {
             return 666;
         }
