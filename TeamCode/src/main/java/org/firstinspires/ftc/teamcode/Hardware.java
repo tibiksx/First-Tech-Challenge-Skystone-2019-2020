@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -18,6 +19,8 @@ public class Hardware {
 
     public DcMotor lifterLeft = null;
     public DcMotor lifterRight = null;
+
+    public DcMotor slider = null;
 
     public DigitalChannel magnet = null;
     public BNO055IMU imu;
@@ -41,6 +44,8 @@ public class Hardware {
 
         lifterLeft = hwMap.get(DcMotor.class, "lifterL");
         lifterRight = hwMap.get(DcMotor.class, "lifterR");
+
+        slider = hwMap.get(DcMotor.class, "slide");
         
         imu = hwMap.get(BNO055IMU.class, "imu");
         magnet = hwMap.get(DigitalChannel.class, "magnet");
@@ -62,6 +67,8 @@ public class Hardware {
         lifterLeft.setPower(0.0);
         lifterRight.setPower(0.0);
 
+        slider.setPower(0.0);
+
         frontLeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -82,8 +89,12 @@ public class Hardware {
         lifterLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lifterRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         lifterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         lifterRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         frontLeftWheel.setDirection(DcMotor.Direction.FORWARD);
         frontRightWheel.setDirection(DcMotor.Direction.REVERSE);
@@ -93,6 +104,8 @@ public class Hardware {
         lifterLeft.setDirection(DcMotor.Direction.REVERSE);
         lifterRight.setDirection(DcMotor.Direction.REVERSE);
 
+        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         frontLeftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -100,6 +113,10 @@ public class Hardware {
         
         lifterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lifterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        slider.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
  }

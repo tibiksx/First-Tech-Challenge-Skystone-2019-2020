@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.tests;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
+
 import org.firstinspires.ftc.teamcode.Hardware;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalCoordinatePosition;
 import org.firstinspires.ftc.teamcode.utils.ControllerInput;
@@ -64,22 +66,24 @@ public class GlobalCoordinatePositionUpdateSample extends LinearOpMode {
 
         while(opModeIsActive()){
 
-            sleep(2000);
-            do {
-                setPowerAll(-Math.cos(Math.toRadians(globalPositionUpdate.returnOrientation())) * 1.1, -Math.cos(Math.toRadians(globalPositionUpdate.returnOrientation())) * 1.1, Math.cos(Math.toRadians(globalPositionUpdate.returnOrientation())) * 1.1, Math.cos(Math.toRadians(globalPositionUpdate.returnOrientation())) * 1.1);
-                telemetry.addData("X Position: %.2f", globalPositionUpdate.returnXCoordinate() / COUNTS_PER_INCH);
-                telemetry.addData("Y Position: %.2f", globalPositionUpdate.returnYCoordinate() / COUNTS_PER_INCH);
-                telemetry.addData("Orientation (Degrees): %.2f", globalPositionUpdate.returnOrientation());
-                telemetry.addData("Thread Active", positionThread.isAlive());
-                telemetry.addData("IMU", -robot.imu.getAngularOrientation().firstAngle);
-                telemetry.addData("Vertical Left Position", -robot.verticalLeft.getCurrentPosition());
-                telemetry.addData("Vertical Right Position", -robot.verticalRight.getCurrentPosition());
-                telemetry.addData("Horizontal Position", -robot.horizontal.getCurrentPosition());
-                telemetry.addData("change: ", globalPositionUpdate.changeInRobotOrientation);
-                telemetry.addData("diff: ", globalPositionUpdate.verticalLeftEncoderWheelPosition - globalPositionUpdate.verticalRightEncoderWheelPosition);
-                telemetry.update();
-            } while (globalPositionUpdate.returnOrientation() < 90);
-            setPowerAll(0,0,0,0);
+            float drive, turn, strafe;
+
+            drive = -gamepad1.left_stick_y;
+            turn = gamepad1.right_stick_x;
+            strafe = -gamepad1.left_stick_x;
+
+            // clip() = demands a number to be in certain bounds
+            // number is calculated and then processed
+            double leftFrontPower = Range.clip(drive + turn - strafe, -1.0, 1.0);
+            double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
+            double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
+            double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
+
+            robot.frontLeftWheel.setPower(leftFrontPower);
+            robot.frontRightWheel.setPower(rightFrontPower);
+            robot.backLeftWheel.setPower(leftBackPower);
+            robot.backRightWheel.setPower(rightBackPower);
+
             //Display Global (x, y, theta) coordinates
             telemetry.addData("X Position: %.2f", globalPositionUpdate.returnXCoordinate() / COUNTS_PER_INCH);
             telemetry.addData("Y Position: %.2f", globalPositionUpdate.returnYCoordinate() / COUNTS_PER_INCH);

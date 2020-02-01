@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.utils.ControllerInput;
 import org.firstinspires.ftc.teamcode.utils.LifterThread;
+import org.firstinspires.ftc.teamcode.utils.SliderThread;
 
 @TeleOp(name="Pushbot: Teleop", group="Pushbot")
 
@@ -16,7 +17,6 @@ public class PushbotTeleop extends OpMode {
 
     Hardware robot = new Hardware();
 
-    double posFound1 = 0.0, posFound2 = 0.0;
     double coeff = 1.0;
     int i = 0;
 
@@ -24,7 +24,7 @@ public class PushbotTeleop extends OpMode {
     public ControllerInput controllerInputB;
 
     public LifterThread lifterThread;
-
+    public SliderThread sliderThread;
 
     public enum LIFTER {
         LOW,
@@ -36,14 +36,18 @@ public class PushbotTeleop extends OpMode {
 
     public LIFTER currentState;
     LIFTER[] level = {LIFTER.LOW, LIFTER.FIRST, LIFTER.SECOND, LIFTER.THIRD, LIFTER.FOURTH};
+    int mode = 2;
 
     double oldPower = 0;
     double newPower = 0;
+    double t1Power = 0;
+    double t2Power = 0;
 
     public Telemetry.Item state;
     public Telemetry.Item threadState;
     public Telemetry.Item lifterTicks;
     public Telemetry.Item lifterLevel;
+    public Telemetry.Item sliderTicks;
 
     public Telemetry.Item leftEncoder;
     public Telemetry.Item rightEncoder;
@@ -64,12 +68,15 @@ public class PushbotTeleop extends OpMode {
 
         robot.lifterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         robot.lifterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        robot.slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         currentState = LIFTER.LOW;
 
         lifterThread = new LifterThread(robot.lifterLeft, robot.lifterRight);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
+
+        sliderThread = new SliderThread(robot.slider, mode);
 
 
         telemetry.setAutoClear(false);
@@ -166,6 +173,11 @@ public class PushbotTeleop extends OpMode {
         controllerInputA.update();
         controllerInputB.update();
 
+        if (robot.lifterLeft.getPower() != 0) {
+            robot.lifterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            robot.lifterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        }
+
     }
 
     @Override
@@ -176,7 +188,7 @@ public class PushbotTeleop extends OpMode {
         telemetry.update();
     }
 
-    int getTicksFromState(LIFTER currentState) {
+    private int getTicksFromState(LIFTER currentState) {
         switch (currentState) {
             case LOW:
                 return 0;
@@ -192,7 +204,7 @@ public class PushbotTeleop extends OpMode {
         return -1; //code should never reach here. Yes, this function sucks...
     }
 
-    int getEncoderPosition(char encoderInitial) {
+    private int getEncoderPosition(char encoderInitial) {
 
         if (encoderInitial == 'l') {
             return robot.verticalLeft.getCurrentPosition();

@@ -53,7 +53,7 @@ public class OdometryCalibration extends LinearOpMode {
             robot.frontLeftWheel.setPower(PIVOT_SPEED);
             robot.backLeftWheel.setPower(PIVOT_SPEED);
 
-            if(getZAngle() < 60) {
+            if (getZAngle() < 60) {
                 setPowerAll(-PIVOT_SPEED, -PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED);
             } else {
                 setPowerAll(-PIVOT_SPEED/2, -PIVOT_SPEED/2, PIVOT_SPEED/2, PIVOT_SPEED/2);
@@ -84,15 +84,15 @@ public class OdometryCalibration extends LinearOpMode {
 
         double verticalEncoderTickOffsetPerDegree = encoderDifference / angle;
 
-        double wheelBaseSeparation = (180 * verticalEncoderTickOffsetPerDegree)/(Math.PI*COUNTS_PER_INCH);
+        double wheelBaseSeparation = (180 * verticalEncoderTickOffsetPerDegree) / (Math.PI * COUNTS_PER_INCH);
 
-        horizontalTickOffset = robot.horizontal.getCurrentPosition()/getZAngle();
+        horizontalTickOffset = Math.abs(robot.horizontal.getCurrentPosition()/getZAngle());
 
         //Write the constants to text files
         ReadWriteFile.writeFile(wheelBaseSeparationFile, String.valueOf(wheelBaseSeparation));
         ReadWriteFile.writeFile(horizontalTickOffsetFile, String.valueOf(horizontalTickOffset));
 
-        while(opModeIsActive()){
+        while(opModeIsActive()) {
             telemetry.addData("Odometry System Calibration Status", "Calibration Complete");
             //Display calculated constants
             telemetry.addData("Wheel Base Separation", wheelBaseSeparation);
