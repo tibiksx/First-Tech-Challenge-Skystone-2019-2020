@@ -87,14 +87,14 @@ public class VuforiaNavigation extends LinearOpMode {
     // Constant for Stone Target
     private static final float stoneZ = 2.00f * mmPerInch;
 
-    // Constants for the center support targets
+    // Utilities for the center support targets
     private static final float bridgeZ = 6.42f * mmPerInch;
     private static final float bridgeY = 23 * mmPerInch;
     private static final float bridgeX = 5.18f * mmPerInch;
     private static final float bridgeRotY = 59;                                 // Units are degrees
     private static final float bridgeRotZ = 180;
 
-    // Constants for perimeter targets
+    // Utilities for perimeter targets
     private static final float halfField = 72 * mmPerInch;
     private static final float quadField  = 36 * mmPerInch;
 

@@ -6,7 +6,24 @@ package org.firstinspires.ftc.teamcode.Misc;
  * The method getTicksFromState converts the enum value to an actual
  * encoder value. These values where determined through testing.
  */
+
 public class LifterMethods {
+
+
+    public static LIFTER[] level = {LIFTER.LOW, LIFTER.FIRST, LIFTER.SECOND, LIFTER.THIRD, LIFTER.FOURTH, LIFTER.FIFTH, LIFTER.SIXTH};
+
+    public static LIFTER getStateFromTicks(int ticks) {
+        if(ticks < 0) return LIFTER.FLOAT;
+        if(ticks > 0 && ticks < getTicksFromState(LIFTER.FIRST)) return LIFTER.LOW;
+        if(ticks > getTicksFromState(LIFTER.LOW) && ticks < getTicksFromState(LIFTER.SECOND)) return LIFTER.FIRST;
+        if(ticks > getTicksFromState(LIFTER.FIRST) && ticks < getTicksFromState(LIFTER.THIRD)) return LIFTER.SECOND;
+        if(ticks > getTicksFromState(LIFTER.SECOND) && ticks < getTicksFromState(LIFTER.FOURTH)) return LIFTER.THIRD;
+        if(ticks > getTicksFromState(LIFTER.THIRD) && ticks < getTicksFromState(LIFTER.FIFTH)) return LIFTER.FOURTH;
+        if(ticks > getTicksFromState(LIFTER.FOURTH) && ticks < getTicksFromState(LIFTER.SIXTH)) return LIFTER.FIFTH;
+        if(ticks > getTicksFromState(LIFTER.FIFTH) && ticks < getTicksFromState(LIFTER.SIXTH) + 300) return LIFTER.SIXTH;
+        if(ticks > getTicksFromState(LIFTER.SIXTH) + 300)  return LIFTER.FLOAT;
+        return LIFTER.FLOAT;
+    }
 
     public enum LIFTER {
         LOW,
@@ -15,7 +32,8 @@ public class LifterMethods {
         THIRD,
         FOURTH,
         FIFTH,
-        SIXTH
+        SIXTH,
+        FLOAT
     }
 
     public static LIFTER getNextState(LIFTER currentState) {
@@ -70,6 +88,6 @@ public class LifterMethods {
             case SIXTH:
                 return 5880;
         }
-        return -1; //code should never reach here. Yes, this function sucks...
+        return 0; //code should never reach here. Yes, this function sucks...
     }
 }

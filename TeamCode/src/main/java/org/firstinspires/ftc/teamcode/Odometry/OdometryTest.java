@@ -1,26 +1,20 @@
-package org.firstinspires.ftc.teamcode.TeleOps;
+package org.firstinspires.ftc.teamcode.Odometry;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Misc.Utilities;
 import org.firstinspires.ftc.teamcode.Misc.Robot;
-import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 
 /**
- * This class just includes the driving part of the robot, including
- * displaying the X,Y and orientation of the robot.
+ * This class is test for odometry. It displays X, Y and Orientation in degrees.
+ * It also displays the encoder positions.
  */
 
-@TeleOp(name = "Driving + Odometry", group = "Pushbot")
-public class DrivingTeleOp extends Robot {
+@TeleOp(name = "Odometry Test", group = "Pushbot")
+public class OdometryTest extends Robot {
 
     private double powerCoeff = 1;
-
-    private Telemetry.Item globalXCoordinateTelemetry = null;
-    private Telemetry.Item globalYCoordinateTelemetry = null;
-    private Telemetry.Item globalOrientationTelemetry = null;
 
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
 
@@ -28,16 +22,10 @@ public class DrivingTeleOp extends Robot {
     public void init() {
         super.init();
 
-        globalXCoordinateTelemetry = telemetry.addData("X: ",0);
-        globalYCoordinateTelemetry = telemetry.addData("Y: ",0);
-        globalOrientationTelemetry = telemetry.addData("Angle: ",0);
-        telemetry.update();
-
         globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
 
         globalPositionUpdate.reverseLeftEncoder();
         globalPositionUpdate.reverseNormalEncoder();
-        globalPositionUpdate.reverseRightEncoder();
 
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
@@ -72,9 +60,13 @@ public class DrivingTeleOp extends Robot {
         robot.backLeftWheel.setPower(powerCoeff * leftBackPower);
         robot.backRightWheel.setPower(powerCoeff * rightBackPower);
 
-        globalXCoordinateTelemetry.setValue("%.3f", Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition));
-        globalYCoordinateTelemetry.setValue("%.3f", Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition));
-        globalOrientationTelemetry.setValue("%.3f",globalPositionUpdate.returnOrientationDeg());
+        telemetry.log().clear();
+        telemetry.addData("X:  ",Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate()));
+        telemetry.addData("Y: ", Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate()));
+        telemetry.addData("Angle: ",globalPositionUpdate.returnOrientationDeg());
+        telemetry.addData("Left: ",robot.verticalLeft.getCurrentPosition());
+        telemetry.addData("Right: ",robot.verticalRight.getCurrentPosition());
+        telemetry.addData("Horizontal: ",robot.horizontal.getCurrentPosition());
         telemetry.update();
     }
 

@@ -4,7 +4,6 @@ import android.os.SystemClock;
 
 
 import org.openftc.revextensions2.ExpansionHubMotor;
-@Deprecated
 public class MotorThread implements Runnable {
 
 

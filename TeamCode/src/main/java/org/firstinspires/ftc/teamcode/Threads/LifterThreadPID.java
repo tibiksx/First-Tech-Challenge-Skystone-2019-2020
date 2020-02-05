@@ -4,9 +4,6 @@ import android.os.SystemClock;
 
 import org.openftc.revextensions2.ExpansionHubMotor;
 
-/**
- * @deprecated at the moment
- */
 
 @Deprecated
 public class LifterThreadPID implements Runnable {
