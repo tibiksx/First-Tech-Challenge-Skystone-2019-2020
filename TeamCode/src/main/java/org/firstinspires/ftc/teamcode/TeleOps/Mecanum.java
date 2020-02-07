@@ -1,14 +1,10 @@
 package org.firstinspires.ftc.teamcode.TeleOps;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Misc.Utilities;
-import org.firstinspires.ftc.teamcode.Misc.LifterMethods;
-import org.firstinspires.ftc.teamcode.Misc.Robot;
+import org.firstinspires.ftc.teamcode.Misc.*;
 import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
 import org.openftc.revextensions2.ExpansionHubMotor;
@@ -39,7 +35,15 @@ public class Mecanum extends Robot {
     private boolean leftBumperInput;
     private boolean rightBumperInput;
 
-    private boolean buttonIsPressed = false;
+    private boolean newButtonState = false;
+    private boolean oldButtonState = false;
+
+    private final double initialXCoordinate = 0;
+    private final double initialYCoordinate = 0;
+    private final double initialOrientationDegrees = 0;
+
+    private PositioningSystem positioningSystem;
+    private ClawSystem clawSystem;
 
     @Override
     public void init() {
@@ -51,16 +55,26 @@ public class Mecanum extends Robot {
         armTelemetry = telemetry.addData("Arm - ", "Lifter:  " + 0 + "  Extension:  " + 0);
         telemetry.update();
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
-
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight
+                , robot.horizontal, Utilities.TICKS_PER_INCH, 75);
+        globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, Math.toRadians(initialOrientationDegrees));
         globalPositionUpdate.reverseLeftEncoder();
         globalPositionUpdate.reverseNormalEncoder();
+        Thread positionThread = new Thread(globalPositionUpdate);
+        positionThread.start();
 
         lifterThread = new LifterThread(robot.leftLifter, robot.rightLifter);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
         currentState = LifterMethods.LIFTER.FLOAT;
         levelIndex = 0;
+
+        clawSystem = new ClawSystem(robot.clawLeft, robot.clawRight, robot.flipper);
+        clawSystem.Detach();
+        clawSystem.lowerFlipper();
+
+        positioningSystem = new PositioningSystem(robot.posLeft, robot.posRight);
+        positioningSystem.Detach();
     }
 
 
@@ -105,56 +119,59 @@ public class Mecanum extends Robot {
 
 
         //--------------------LIFTER------------------------------------
-        if (robot.button.isPressed()) {  //end all motion completely
-            buttonIsPressed = true;
+
+        newButtonState = robot.button.isPressed();
+        if (newButtonState && !oldButtonState) {    //raising edge of the signal
+            //kill the motors running in thread
+            LifterThread.finished = true;
             robot.leftLifter.setPower(0);
             robot.rightLifter.setPower(0);
             robot.leftLifter.setMode(ExpansionHubMotor.RunMode.STOP_AND_RESET_ENCODER);
             robot.leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
+            currentState = LifterMethods.LIFTER.LOW;
         }
-        else buttonIsPressed = false;
+        oldButtonState = newButtonState;
 
         lifterNewPower = gamepad2.right_stick_y;
         if (lifterNewPower != lifterOldPower && LifterThread.finished) {
 
-            if(buttonIsPressed && lifterNewPower > 0) lifterNewPower = 0;
-            if (lifterNewPower < -0.8) lifterNewPower = lifterNewPower * 0.7;
+            if (newButtonState && lifterNewPower > 0) { //if button is pressed limit movement to upwards only
+                lifterNewPower = 0;
+            }
             robot.leftLifter.setPower(-lifterNewPower);
             robot.rightLifter.setPower(-lifterNewPower);
         }
         lifterOldPower = lifterNewPower;
 
         if (controllerInputB.dpadLeftOnce() && levelIndex > 0) levelIndex--;
-        if (controllerInputB.dpadRightOnce() && levelIndex < 6) levelIndex++;
+        if (controllerInputB.dpadRightOnce() && levelIndex < 8) levelIndex++;
 
-        if (controllerInputB.dpadUpOnce() && LifterThread.finished) {
-
+        if ((controllerInputB.dpadUpOnce() || controllerInputB.dpadDownOnce()) && LifterThread.finished) {
             lifterThread.setTicks(LifterMethods.getTicksFromState(level[levelIndex]));
             currentState = level[levelIndex];
         }
         currentState = LifterMethods.getStateFromTicks(robot.leftLifter.getCurrentPosition());
 
-
         //-------------------SERVO CONTROL-----------------------------
-
+        if (controllerInputB.AOnce() && !clawSystem.isAttached()) positioningSystem.Attach();
+        if (controllerInputB.BOnce()) positioningSystem.Detach();
+        if (controllerInputA.AOnce() && (!positioningSystem.isAttached() || robot.leftLifter.getCurrentPosition() > 1100)) clawSystem.Attach();
+        if (controllerInputA.BOnce()) clawSystem.Detach();
+        if (controllerInputB.XOnce()) clawSystem.raiseFlipper();
+        if (controllerInputB.YOnce()) clawSystem.lowerFlipper();
 
         updateTelemetry();
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
     }
 
     private void updateTelemetry() {
         NumberFormat formatter = new DecimalFormat("#0.000");
         odometryTelemetry.setValue("X: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate()))
-                + "Y: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate())) + "  Angle: "
+                + "  Y: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate())) + "  Angle: "
                 + formatter.format(globalPositionUpdate.returnOrientationDeg()) + "  Alive: "
                 + globalPositionUpdate.isRunning);
         powerCoeffTelemetry.setValue(powerCoeff);
         armTelemetry.setValue("Lifter:  " + robot.leftLifter.getCurrentPosition() + "  Next level:  " + levelIndex
-                + " Thread: " + LifterThread.finished + "  Button: " + robot.button.isPressed());
+                + "  Button: " + robot.button.isPressed() + " Slider  " + robot.slider.getCurrentPosition());
         telemetry.update();
     }
 

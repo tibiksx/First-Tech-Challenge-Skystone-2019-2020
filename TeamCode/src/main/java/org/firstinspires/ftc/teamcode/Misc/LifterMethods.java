@@ -10,18 +10,21 @@ package org.firstinspires.ftc.teamcode.Misc;
 public class LifterMethods {
 
 
-    public static LIFTER[] level = {LIFTER.LOW, LIFTER.FIRST, LIFTER.SECOND, LIFTER.THIRD, LIFTER.FOURTH, LIFTER.FIFTH, LIFTER.SIXTH};
+    public static LIFTER[] level = {LIFTER.LOW, LIFTER.FIRST, LIFTER.SECOND, LIFTER.THIRD, LIFTER.FOURTH
+            , LIFTER.FIFTH, LIFTER.SIXTH,LIFTER.SEVENTH, LIFTER.EIGHTH};
 
     public static LIFTER getStateFromTicks(int ticks) {
         if(ticks < 0) return LIFTER.FLOAT;
         if(ticks > 0 && ticks < getTicksFromState(LIFTER.FIRST)) return LIFTER.LOW;
-        if(ticks > getTicksFromState(LIFTER.LOW) && ticks < getTicksFromState(LIFTER.SECOND)) return LIFTER.FIRST;
-        if(ticks > getTicksFromState(LIFTER.FIRST) && ticks < getTicksFromState(LIFTER.THIRD)) return LIFTER.SECOND;
-        if(ticks > getTicksFromState(LIFTER.SECOND) && ticks < getTicksFromState(LIFTER.FOURTH)) return LIFTER.THIRD;
-        if(ticks > getTicksFromState(LIFTER.THIRD) && ticks < getTicksFromState(LIFTER.FIFTH)) return LIFTER.FOURTH;
-        if(ticks > getTicksFromState(LIFTER.FOURTH) && ticks < getTicksFromState(LIFTER.SIXTH)) return LIFTER.FIFTH;
-        if(ticks > getTicksFromState(LIFTER.FIFTH) && ticks < getTicksFromState(LIFTER.SIXTH) + 300) return LIFTER.SIXTH;
-        if(ticks > getTicksFromState(LIFTER.SIXTH) + 300)  return LIFTER.FLOAT;
+        if(ticks > (getTicksFromState(LIFTER.LOW) + 100) && ticks < getTicksFromState(LIFTER.SECOND)) return LIFTER.FIRST;
+        if(ticks > (getTicksFromState(LIFTER.FIRST) + 100) && ticks < getTicksFromState(LIFTER.THIRD)) return LIFTER.SECOND;
+        if(ticks > (getTicksFromState(LIFTER.SECOND)+ 100) && ticks < getTicksFromState(LIFTER.FOURTH)) return LIFTER.THIRD;
+        if(ticks > (getTicksFromState(LIFTER.THIRD)+ 100) && ticks < getTicksFromState(LIFTER.FIFTH)) return LIFTER.FOURTH;
+        if(ticks > (getTicksFromState(LIFTER.FOURTH) + 100) && ticks < getTicksFromState(LIFTER.SIXTH)) return LIFTER.FIFTH;
+        if(ticks > (getTicksFromState(LIFTER.FIFTH) + 100) && ticks < getTicksFromState(LIFTER.SEVENTH)) return LIFTER.SIXTH;
+        if(ticks > (getTicksFromState(LIFTER.SIXTH) + 100) && ticks < getTicksFromState(LIFTER.SEVENTH)) return LIFTER.SEVENTH;
+        if(ticks > (getTicksFromState(LIFTER.SEVENTH) + 100) && ticks < getTicksFromState(LIFTER.EIGHTH) + 100) return LIFTER.EIGHTH;
+        if(ticks > getTicksFromState(LIFTER.EIGHTH) + 300)  return LIFTER.FLOAT;
         return LIFTER.FLOAT;
     }
 
@@ -33,6 +36,8 @@ public class LifterMethods {
         FOURTH,
         FIFTH,
         SIXTH,
+        SEVENTH,
+        EIGHTH,
         FLOAT
     }
 
@@ -50,6 +55,10 @@ public class LifterMethods {
                 return LIFTER.FIFTH;
             case FIFTH:
                 return LIFTER.SIXTH;
+            case SIXTH:
+                return LIFTER.SEVENTH;
+            case SEVENTH:
+                return LIFTER.EIGHTH;
         }
         return currentState;
     }
@@ -67,6 +76,10 @@ public class LifterMethods {
                 return LIFTER.FOURTH;
             case SIXTH:
                 return LIFTER.FIFTH;
+            case SEVENTH:
+                return LIFTER.SIXTH;
+            case EIGHTH:
+                return LIFTER.SEVENTH;
         }
         return currentState;
     }
@@ -76,17 +89,21 @@ public class LifterMethods {
             case LOW:
                 return 0;
             case FIRST:
-                return 245;
+                return 700;
             case SECOND:
-                return 1080;
+                return 1300;
             case THIRD:
-                return 2080;
+                return 2100;
             case FOURTH:
-                return 3280;
+                return 2900;
             case FIFTH:
-                return 4300;
+                return 3670;
             case SIXTH:
-                return 5880;
+                return 4500;
+            case SEVENTH:
+                return 5300;
+            case EIGHTH:
+                return 5990;
         }
         return 0; //code should never reach here. Yes, this function sucks...
     }

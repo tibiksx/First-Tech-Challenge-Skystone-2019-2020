@@ -44,13 +44,13 @@ public class LifterThread implements Runnable {
                 if (leftLifter.getCurrentPosition() < currentTicks) {
                     leftLifter.setPower(1);
                     rightLifter.setPower(1);
-                    while (leftLifter.getCurrentPosition() < currentTicks) {
+                    while (leftLifter.getCurrentPosition() < currentTicks && !finished) {
 
                     }
                 } else {
                     leftLifter.setPower(-0.6);
                     rightLifter.setPower(-0.6);
-                    while (leftLifter.getCurrentPosition() > currentTicks) {
+                    while (leftLifter.getCurrentPosition() > currentTicks && !finished) {
                     }
                 }
 

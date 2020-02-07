@@ -18,7 +18,7 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
     public boolean isRunning = true;
 
     public double verticalRightEncoderWheelPosition = 0, verticalLeftEncoderWheelPosition = 0, normalEncoderWheelPosition = 0,  changeInRobotOrientation = 0;
-    public double robotGlobalXCoordinatePosition = 0.01, robotGlobalYCoordinatePosition = 0.01, robotOrientationRadians = 0.01;
+    public double robotGlobalXCoordinatePosition = 0, robotGlobalYCoordinatePosition = 0, robotOrientationRadians = 0;
     public double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
 
     public double robotEncoderWheelDistance;
@@ -131,6 +131,12 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         }else{
             normalEncoderPositionMultiplier = 1;
         }
+    }
+
+    public void setInitialCoordinates(double x, double y, double angle_rad) {
+        this.robotGlobalXCoordinatePosition = x;
+        this.robotGlobalYCoordinatePosition = y;
+        this.robotOrientationRadians = angle_rad;
     }
 
     /**

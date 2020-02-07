@@ -5,14 +5,10 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
 import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-
 public class Utilities {
     public final static double TICKS_PER_INCH = 259.84481;
     public final static double TICKS_PER_CM = 101.85916;
     public final static double TICKS_PER_REV = 1600;
-    public final static double ENCODER_WHEEL_DIAMETER = 5;
 
     public static final double FIELD_LENGTH = 358.775;
 
@@ -44,7 +40,7 @@ public class Utilities {
     public static void goToPosition(double xGoal, double yGoal, double preferredAngle,double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot) {
         double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate());
         double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate());
-        double worldAngle_rad = globalPositionUpdate.returnOrientationRad();
+        double worldAngle_rad;
 
 
         while((worldXPosition < xGoal && worldYPosition < yGoal) || (worldXPosition >xGoal && worldYPosition > yGoal)) {
@@ -53,7 +49,7 @@ public class Utilities {
             worldAngle_rad = globalPositionUpdate.returnOrientationRad();
             double distToTarget = Math.hypot(xGoal - worldXPosition, yGoal - worldYPosition);
             double absoluteAngleToTarget = Math.atan2(yGoal - worldYPosition, xGoal - worldXPosition);
-            double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad ));
+            double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad));
 
             double relativeXToPoint = Math.cos(relativeAngleToPoint) * distToTarget;
             double relativeYToPoint = Math.sin(relativeAngleToPoint) * distToTarget;
@@ -61,7 +57,10 @@ public class Utilities {
             double movementXPower = relativeXToPoint / (Math.abs(relativeXToPoint) + Math.abs(relativeYToPoint));
             double movementYPower = relativeYToPoint / (Math.abs(relativeXToPoint) + Math.abs(relativeYToPoint));
 
-            double relativeTurnAngle = relativeAngleToPoint - Math.toRadians(180) + preferredAngle;
+            movementXPower = Range.clip(movementXPower,-1,1);
+            movementYPower = Range.clip(movementYPower, -1 , 1);
+
+            double relativeTurnAngle = preferredAngle - worldAngle_rad;
 
             double movementTurn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1);
 

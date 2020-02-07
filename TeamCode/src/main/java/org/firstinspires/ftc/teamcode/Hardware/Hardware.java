@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
@@ -36,8 +34,11 @@ public class Hardware {
     public BNO055IMU imu;
 
     //----------------------SERVOS----------------
-    public ExpansionHubServo flipper1 = null;
-    public ExpansionHubServo flipper2 = null;
+    public ExpansionHubServo posLeft = null;
+    public ExpansionHubServo posRight = null;
+    public ExpansionHubServo clawLeft = null;
+    public ExpansionHubServo clawRight = null;
+    public ExpansionHubServo flipper = null;
 
     private HardwareMap hwMap = null;
 
@@ -101,9 +102,6 @@ public class Hardware {
         leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
         rightLifter.setMode(ExpansionHubMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-//        leftLifter.setDirection(ExpansionHubMotor.Direction.REVERSE);
-//        rightLifter.setDirection(ExpansionHubMotor.Direction.REVERSE);
-
         leftLifter.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.BRAKE);
         rightLifter.setZeroPowerBehavior(ExpansionHubMotor.ZeroPowerBehavior.BRAKE);
 
@@ -120,8 +118,11 @@ public class Hardware {
         button = hwMap.get(TouchSensor.class, "touch");
 
         //-----------------------SERVOS----------------------------
-//        flipper1 = hwMap.get(ExpansionHubServo.class, " flipper1");
-//        flipper2 = hwMap.get(ExpansionHubServo.class, "flipper2");
+        posRight = hwMap.get(ExpansionHubServo.class, "posRight");
+        posLeft = hwMap.get(ExpansionHubServo.class, "posLeft");
+        clawLeft = hwMap.get(ExpansionHubServo.class,"clawLeft");
+        clawRight = hwMap.get(ExpansionHubServo.class,"clawRight");
+        flipper = hwMap.get(ExpansionHubServo.class,"flipper");
 
     }
 
@@ -136,6 +137,7 @@ public class Hardware {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
     }
+
 
 }
 
