@@ -61,9 +61,9 @@ public class OdometryTest extends Robot {
         robot.backRightWheel.setPower(powerCoeff * rightBackPower);
 
         telemetry.log().clear();
-        telemetry.addData("X:  ",Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate()));
-        telemetry.addData("Y: ", Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate()));
-        telemetry.addData("Angle: ",globalPositionUpdate.returnOrientationDeg());
+        telemetry.addData("X:  ",Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition));
+        telemetry.addData("Y: ", Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition));
+        telemetry.addData("Angle: ",globalPositionUpdate.robotOrientationDeg);
         telemetry.addData("Left: ",robot.verticalLeft.getCurrentPosition());
         telemetry.addData("Right: ",robot.verticalRight.getCurrentPosition());
         telemetry.addData("Horizontal: ",robot.horizontal.getCurrentPosition());

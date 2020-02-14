@@ -10,13 +10,13 @@ import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-@TeleOp(name = "Test TeleOp")
-public class Test_TeleOp extends Robot {
+@TeleOp(name = "Test TeleOp 2")
+public class TeleOp2 extends Robot {
 
-    private static double xGoal = 60;
-    private static double yGoal = 0;
+    private static double xGoal = 0;
+    private static double yGoal = 60;
     private static double turnSpeed = 0.7;
-    private static final double preferredAngle = Math.toRadians(90);
+    private static final double preferredAngle = Math.toRadians(0);
 
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
 
@@ -41,8 +41,8 @@ public class Test_TeleOp extends Robot {
 
 //        float drive, turn, strafe;
 //
-//        drive = -gamepad1.left_stick_y;    0.5
-//        strafe = -gamepad1.left_stick_x;   -0.5
+//        drive = -gamepad1.left_stick_y;
+//        strafe = -gamepad1.left_stick_x;
 //        turn = gamepad1.right_stick_x;
 //
 //        double leftFrontPower = Range.clip(drive + turn - strafe, -1.0, 1.0);
@@ -62,7 +62,8 @@ public class Test_TeleOp extends Robot {
         double distToTarget = Math.hypot(xGoal - worldXPosition, yGoal - worldYPosition);
         double absoluteAngleToTarget = Math.atan2(yGoal - worldYPosition, xGoal - worldXPosition);
 
-        double relativeAngleToPoint = -(absoluteAngleToTarget - worldAngle_rad);
+
+        double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - worldAngle_rad);
 
         double relativeXToPoint = Math.cos(relativeAngleToPoint) * distToTarget;
         double relativeYToPoint = Math.sin(relativeAngleToPoint) * distToTarget;
@@ -72,11 +73,11 @@ public class Test_TeleOp extends Robot {
 
         double relativeTurnAngle = preferredAngle - worldAngle_rad;
 
-        double movementTurn =relativeTurnAngle / Math.toRadians(30);
+        double movementTurn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1);
 
-        double d = movementYPower;   //0.5
+        double d = movementYPower;
         double t = movementTurn;
-        double s = -movementXPower;   //-0.5
+        double s = -movementXPower;
         double fl = d + t - s;
         double bl = d + t + s;
         double fr = d - t + s;
@@ -108,8 +109,6 @@ public class Test_TeleOp extends Robot {
         telemetry.addData("Movement X Power: ",(movementXPower));
         telemetry.addData("Movement Y Power: ", (movementYPower));
         telemetry.addData("Movement Turn: ", (movementTurn));
-        telemetry.addData("Joystick: ",formatter.format(-gamepad1.left_stick_y) + " " + formatter.format(-gamepad1.left_stick_x) + " "
-                + formatter.format(gamepad1.right_stick_x));
         telemetry.addData( "POWERS ",formatter.format(fl) + " " + formatter.format(bl) + " " + formatter.format(fr) + " " + formatter.format(br));
         telemetry.update();
 

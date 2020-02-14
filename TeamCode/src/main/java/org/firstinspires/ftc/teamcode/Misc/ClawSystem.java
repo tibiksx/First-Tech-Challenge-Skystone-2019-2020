@@ -2,41 +2,46 @@ package org.firstinspires.ftc.teamcode.Misc;
 
 import org.openftc.revextensions2.ExpansionHubServo;
 
+import static android.os.SystemClock.sleep;
+
 public class ClawSystem {
-    private ExpansionHubServo clawRight;
-    private ExpansionHubServo clawLeft;
+    private ExpansionHubServo claw;
     private ExpansionHubServo flipper;
 
     private boolean attached = false;
     private boolean lowered = false;
 
-    public ClawSystem(ExpansionHubServo clawLeft, ExpansionHubServo clawRight, ExpansionHubServo flipper1) {
-        this.clawLeft = clawLeft;
-        this.clawRight = clawRight;
+    public ClawSystem(ExpansionHubServo claw, ExpansionHubServo flipper1) {
+        this.claw = claw;
         this.flipper = flipper1;
     }
 
     public void Detach() {
-        clawRight.setPosition(1);
-        clawLeft.setPosition(0);
+        claw.setPosition(0);
+        raiseFlipper();
         attached = false;
     }
 
     public void Attach() {
-        clawRight.setPosition(0.15);
-        clawLeft.setPosition(1);
+        lowerFlipper();
+        sleep(100);
+        claw.setPosition(0.8);
         attached = true;
     }
 
     public void lowerFlipper() {
         lowered = true;
-        flipper.setPosition(0.5);
+        flipper.setPosition(0);
 
     }
 
     public void raiseFlipper() {
         lowered = false;
         flipper.setPosition(1);
+    }
+
+    public void Initial() {
+        claw.setPosition(0.8);
     }
 
     public boolean isAttached() { return attached; }

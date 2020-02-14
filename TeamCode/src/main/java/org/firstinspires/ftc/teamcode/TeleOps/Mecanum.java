@@ -7,11 +7,13 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Misc.*;
 import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
+import org.firstinspires.ftc.teamcode.Threads.LifterThreadPID;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
+import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.teamcode.Misc.LifterMethods.level;
 
 @TeleOp(name = "Main TeleOp", group = "Pushbot")
@@ -28,7 +30,7 @@ public class Mecanum extends Robot {
 
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
 
-    private LifterThread lifterThread = null;
+    private LifterThreadPID lifterThread = null;
     public LifterMethods.LIFTER currentState;
     private int levelIndex;
 
@@ -44,6 +46,7 @@ public class Mecanum extends Robot {
 
     private PositioningSystem positioningSystem;
     private ClawSystem clawSystem;
+    private FoundationSystem foundationSystem;
 
     @Override
     public void init() {
@@ -63,18 +66,21 @@ public class Mecanum extends Robot {
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
 
-        lifterThread = new LifterThread(robot.leftLifter, robot.rightLifter);
+        lifterThread = new LifterThreadPID(robot.leftLifter, robot.rightLifter);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
         currentState = LifterMethods.LIFTER.FLOAT;
         levelIndex = 0;
 
-        clawSystem = new ClawSystem(robot.clawLeft, robot.clawRight, robot.flipper);
-        clawSystem.Detach();
-        clawSystem.lowerFlipper();
+        clawSystem = new ClawSystem(robot.claw, robot.flipper);
+        clawSystem.Initial();
+        clawSystem.raiseFlipper();
 
         positioningSystem = new PositioningSystem(robot.posLeft, robot.posRight);
-        positioningSystem.Detach();
+        positioningSystem.Initial();
+
+        foundationSystem = new FoundationSystem(robot.foundationLeft,robot.foundationRight);
+        foundationSystem.Detach();
     }
 
 
@@ -87,10 +93,10 @@ public class Mecanum extends Robot {
         } else if (controllerInputA.rightBumperOnce() && powerCoeff <= 1) {
             powerCoeff += 0.1;
         }
-        powerCoeff = Range.clip(powerCoeff, 0.0, 1.0);
+        powerCoeff = Range.clip(powerCoeff, 0.1, 1.0);
 
         //------------------DRIVING-----------------------
-        float drive, turn, strafe;
+        double drive, turn, strafe;
 
         drive = -gamepad1.left_stick_y;
         strafe = -gamepad1.left_stick_x;
@@ -153,26 +159,76 @@ public class Mecanum extends Robot {
         currentState = LifterMethods.getStateFromTicks(robot.leftLifter.getCurrentPosition());
 
         //-------------------SERVO CONTROL-----------------------------
-        if (controllerInputB.AOnce() && !clawSystem.isAttached()) positioningSystem.Attach();
-        if (controllerInputB.BOnce()) positioningSystem.Detach();
-        if (controllerInputA.AOnce() && (!positioningSystem.isAttached() || robot.leftLifter.getCurrentPosition() > 1100)) clawSystem.Attach();
-        if (controllerInputA.BOnce()) clawSystem.Detach();
-        if (controllerInputB.XOnce()) clawSystem.raiseFlipper();
-        if (controllerInputB.YOnce()) clawSystem.lowerFlipper();
 
+        if (controllerInputA.BOnce()) { //  deal with the claw
+            if (!clawSystem.isAttached())
+            {
+                clawSystem.Attach(); //when attaching claw, wait a little then detach the positioning system
+                sleep(500);
+                positioningSystem.Detach();
+                sleep(200);
+            }
+            else clawSystem.Detach();
+        }
+
+        if (controllerInputB.AOnce()) // deal with the positioning system
+        {
+            if (positioningSystem.isInitial())
+                positioningSystem.Detach();
+            else if (positioningSystem.isAttached())
+                positioningSystem.Detach();
+            else positioningSystem.Attach();
+        }
+
+        if (controllerInputB.YOnce()) { //deal with the flipper
+            if (clawSystem.isLowered())
+                clawSystem.raiseFlipper();
+            else clawSystem.lowerFlipper();
+        }
+
+        if(controllerInputA.AOnce()) { //deal with the foundation system
+            if(foundationSystem.isAttached())
+                foundationSystem.Detach();
+            else foundationSystem.Attach();
+        }
+
+//
         updateTelemetry();
+
     }
 
     private void updateTelemetry() {
         NumberFormat formatter = new DecimalFormat("#0.000");
-        odometryTelemetry.setValue("X: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate()))
-                + "  Y: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate())) + "  Angle: "
-                + formatter.format(globalPositionUpdate.returnOrientationDeg()) + "  Alive: "
+        odometryTelemetry.setValue("X: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition))
+                + "  Y: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition)) + "  Angle: "
+                + formatter.format(globalPositionUpdate.robotOrientationDeg) + "  Alive: "
                 + globalPositionUpdate.isRunning);
         powerCoeffTelemetry.setValue(powerCoeff);
         armTelemetry.setValue("Lifter:  " + robot.leftLifter.getCurrentPosition() + "  Next level:  " + levelIndex
                 + "  Button: " + robot.button.isPressed() + " Slider  " + robot.slider.getCurrentPosition());
         telemetry.update();
+    }
+
+
+    private void moveSlider(int position) {
+        robot.slider.setTargetPosition(position);
+        robot.slider.setTargetPositionTolerance(50);
+        robot.slider.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
+        if (robot.slider.getCurrentPosition() < position) {
+            robot.slider.setPower(1);
+            while (robot.slider.getCurrentPosition() < position - 100) {
+                telemetry.addData("POZ", robot.slider.getPower() + " " + robot.slider.getCurrentPosition());
+                telemetry.update();
+            }
+        } else {
+            robot.slider.setPower(-1);
+            while (robot.slider.getCurrentPosition() > position + 100) {
+                telemetry.addData("POZ", robot.slider.getPower() + " " + robot.slider.getCurrentPosition());
+                telemetry.update();
+            }
+        }
+        robot.slider.setPower(0);
+        sleep(50);
     }
 
 }

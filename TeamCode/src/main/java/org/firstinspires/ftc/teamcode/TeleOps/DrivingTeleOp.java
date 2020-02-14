@@ -74,7 +74,7 @@ public class DrivingTeleOp extends Robot {
 
         globalXCoordinateTelemetry.setValue("%.3f", Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition));
         globalYCoordinateTelemetry.setValue("%.3f", Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition));
-        globalOrientationTelemetry.setValue("%.3f",globalPositionUpdate.returnOrientationDeg());
+        globalOrientationTelemetry.setValue("%.3f",globalPositionUpdate.robotOrientationDeg);
         telemetry.update();
     }
 

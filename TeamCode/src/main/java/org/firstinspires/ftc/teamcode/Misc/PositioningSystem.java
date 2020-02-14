@@ -7,6 +7,7 @@ public class PositioningSystem {
     private ExpansionHubServo posLeft;
     private ExpansionHubServo posRight;
     private boolean attached = false;
+    private boolean initial = false;
 
     public PositioningSystem(ExpansionHubServo posLeft, ExpansionHubServo posRight) {
         this.posLeft = posLeft;
@@ -17,18 +18,24 @@ public class PositioningSystem {
         posLeft.setPosition(0.9);
         posRight.setPosition(0.15);
         attached = false;
+        initial = false;
     }
 
     public void Attach() {
         posLeft.setPosition(0.55);
         posRight.setPosition(0.5);
         attached = true;
+        initial = false;
     }
 
     public boolean isAttached() { return attached; }
 
     public void Initial() {
+        initial = true;
+        attached = false;
         posLeft.setPosition(0.05);
         posRight.setPosition(1.0);
     }
+
+    public boolean isInitial() { return initial; }
 }

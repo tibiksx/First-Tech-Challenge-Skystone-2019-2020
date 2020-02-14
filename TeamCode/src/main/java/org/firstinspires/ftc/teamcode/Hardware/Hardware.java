@@ -36,9 +36,10 @@ public class Hardware {
     //----------------------SERVOS----------------
     public ExpansionHubServo posLeft = null;
     public ExpansionHubServo posRight = null;
-    public ExpansionHubServo clawLeft = null;
-    public ExpansionHubServo clawRight = null;
+    public ExpansionHubServo claw = null;
     public ExpansionHubServo flipper = null;
+    public ExpansionHubServo foundationLeft = null;
+    public ExpansionHubServo foundationRight =null;
 
     private HardwareMap hwMap = null;
 
@@ -120,9 +121,11 @@ public class Hardware {
         //-----------------------SERVOS----------------------------
         posRight = hwMap.get(ExpansionHubServo.class, "posRight");
         posLeft = hwMap.get(ExpansionHubServo.class, "posLeft");
-        clawLeft = hwMap.get(ExpansionHubServo.class,"clawLeft");
-        clawRight = hwMap.get(ExpansionHubServo.class,"clawRight");
+        claw = hwMap.get(ExpansionHubServo.class,"claw");
         flipper = hwMap.get(ExpansionHubServo.class,"flipper");
+        foundationLeft = hwMap.get(ExpansionHubServo.class,"foundLeft");
+        foundationRight = hwMap.get(ExpansionHubServo.class,"foundRight");
+
 
     }
 

@@ -48,8 +48,8 @@ public class LifterThread implements Runnable {
 
                     }
                 } else {
-                    leftLifter.setPower(-0.6);
-                    rightLifter.setPower(-0.6);
+                    leftLifter.setPower(-1);
+                    rightLifter.setPower(-1);
                     while (leftLifter.getCurrentPosition() > currentTicks && !finished) {
                     }
                 }

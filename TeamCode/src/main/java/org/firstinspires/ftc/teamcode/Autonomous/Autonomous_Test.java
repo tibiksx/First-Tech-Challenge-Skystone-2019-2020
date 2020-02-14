@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import android.os.SystemClock;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -8,6 +10,7 @@ import org.firstinspires.ftc.teamcode.Misc.*;
 import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
 import org.openftc.revextensions2.ExpansionHubMotor;
+
 
 import static org.firstinspires.ftc.teamcode.Misc.Utilities.goToPosition;
 
@@ -28,6 +31,8 @@ public class Autonomous_Test extends LinearOpMode {
     private final double initialYCoordinate = 0;
     private final double initialOrientationDegrees = 0;
 
+    private long currentMillis;
+
     @Override
     public void runOpMode() throws InterruptedException {
         robot.init(hardwareMap);
@@ -39,11 +44,9 @@ public class Autonomous_Test extends LinearOpMode {
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
 
-        clawSystem = new ClawSystem(robot.clawLeft, robot.clawRight, robot.flipper);
-        clawSystem.Detach();
-        sleep(100);
-        clawSystem.lowerFlipper();
-        sleep(100);
+        clawSystem = new ClawSystem(robot.claw, robot.flipper);
+        clawSystem.Initial();
+        clawSystem.raiseFlipper();
 
         positioningSystem = new PositioningSystem(robot.posLeft, robot.posRight);
         positioningSystem.Initial();
@@ -57,17 +60,17 @@ public class Autonomous_Test extends LinearOpMode {
 
         waitForStart();
 
-        moveSlider(1000);
-        sleep(1000);
-        clawSystem.raiseFlipper();
-        positioningSystem.Detach();
-        sleep(1000);
-        moveSlider(3000);
-        sleep(1000);
+        currentMillis = SystemClock.uptimeMillis();
+
+        goToPosition(0,60,Math.toRadians(0),0.6,globalPositionUpdate,robot);
+
+    }
+
+    public void collectStone() {
         clawSystem.lowerFlipper();
         sleep(1000);
         moveSlider(1000);
-        sleep(1000);
+        sleep(600);
         clawSystem.raiseFlipper();
         sleep(1000);
         positioningSystem.Attach();
@@ -75,29 +78,12 @@ public class Autonomous_Test extends LinearOpMode {
         positioningSystem.Detach();
         sleep(1000);
         clawSystem.Attach();
-        sleep(1000);
-        lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIFTH));
-        while (!LifterThread.finished) {
-            telemetry.addData("Thread: ", LifterThread.finished);
-            telemetry.update();
-        }
-        sleep(300);
-        telemetry.log().clear();
-        lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
-        while (!LifterThread.finished) {
-            telemetry.addData("Thread: ", LifterThread.finished);
-            telemetry.update();
-        }
-        sleep(300);
-
-    }
-
-    public void collectStone() {
-
+        sleep(500);
     }
 
     private void moveSlider(int position) {
         robot.slider.setTargetPosition(position);
+        robot.slider.setTargetPositionTolerance(50);
         robot.slider.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
         if (robot.slider.getCurrentPosition() < position) {
             robot.slider.setPower(1);

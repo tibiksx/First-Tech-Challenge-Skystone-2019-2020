@@ -2,10 +2,9 @@ package org.firstinspires.ftc.teamcode.Threads;
 
 import android.os.SystemClock;
 
+import org.firstinspires.ftc.teamcode.Misc.LifterMethods;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
-
-@Deprecated
 public class LifterThreadPID implements Runnable {
 
     public static volatile boolean kill = false;
@@ -15,8 +14,8 @@ public class LifterThreadPID implements Runnable {
 
     public static volatile boolean finished = true;
 
-    public ExpansionHubMotor rightLifter;
-    public ExpansionHubMotor leftLifter;
+    private ExpansionHubMotor rightLifter;
+    private ExpansionHubMotor leftLifter;
 
     public LifterThreadPID(ExpansionHubMotor leftLifter, ExpansionHubMotor rightLifter) {
         this.leftLifter = leftLifter;
@@ -36,19 +35,32 @@ public class LifterThreadPID implements Runnable {
 
             if (currentTicks != lastTicks) //we can move the motor to the new value
             {
+                int lifterTolerance = 50;
+
+                if(currentTicks > lastTicks) { //only if we go upwards
+                    if (LifterMethods.getStateFromTicks(currentTicks) == LifterMethods.LIFTER.SIXTH)
+                        lifterTolerance = 120;
+                    else if (LifterMethods.getStateFromTicks(currentTicks) == LifterMethods.LIFTER.SEVENTH)
+                        lifterTolerance = 135;
+                    else if (LifterMethods.getStateFromTicks(currentTicks) == LifterMethods.LIFTER.EIGHTH)
+                        lifterTolerance = 170;
+                }
+
                 finished = false;
                 leftLifter.setTargetPosition(currentTicks);
+                leftLifter.setTargetPositionTolerance(lifterTolerance);
                 leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
 
-                leftLifter.setPower(1);
-                rightLifter.setPower(1);
                 if (leftLifter.getCurrentPosition() < currentTicks) {
-                    while (leftLifter.getCurrentPosition() < leftLifter.getTargetPosition()) {
+                    leftLifter.setPower(1);
+                    rightLifter.setPower(1);
+                    while (leftLifter.getCurrentPosition() < currentTicks && !finished) {
 
                     }
                 } else {
-                    while (leftLifter.getCurrentPosition() > leftLifter.getTargetPosition()) {
-
+                    leftLifter.setPower(-1);
+                    rightLifter.setPower(-1);
+                    while (leftLifter.getCurrentPosition() > currentTicks && !finished) {
                     }
                 }
                 leftLifter.setPower(0);
@@ -62,6 +74,6 @@ public class LifterThreadPID implements Runnable {
     }
 
     public void setTicks(int ticks) {
-        this.currentTicks = ticks;
+        currentTicks = ticks;
     }
 }

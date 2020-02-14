@@ -38,15 +38,15 @@ public class Utilities {
 
 
     public static void goToPosition(double xGoal, double yGoal, double preferredAngle,double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot) {
-        double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate());
-        double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate());
+        double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
+        double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
         double worldAngle_rad;
 
 
         while((worldXPosition < xGoal && worldYPosition < yGoal) || (worldXPosition >xGoal && worldYPosition > yGoal)) {
-            worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.returnXCoordinate());
-            worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.returnYCoordinate());
-            worldAngle_rad = globalPositionUpdate.returnOrientationRad();
+            worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
+            worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
+            worldAngle_rad = globalPositionUpdate.robotOrientationRadians;
             double distToTarget = Math.hypot(xGoal - worldXPosition, yGoal - worldYPosition);
             double absoluteAngleToTarget = Math.atan2(yGoal - worldYPosition, xGoal - worldXPosition);
             double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad));
