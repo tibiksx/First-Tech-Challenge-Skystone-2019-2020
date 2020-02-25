@@ -1,7 +1,11 @@
 package org.firstinspires.ftc.teamcode.Threads;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import java.io.File;
 
+@Disabled
+@Deprecated
 public class MusicThread implements Runnable {
 
     private String soundPath = "/FIRST/blocks/sounds";

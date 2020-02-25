@@ -7,7 +7,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Misc.*;
 import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
-import org.firstinspires.ftc.teamcode.Threads.LifterThreadPID;
+import org.firstinspires.ftc.teamcode.Threads.SliderThreadPID;
+import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
 import java.text.DecimalFormat;
@@ -30,12 +31,18 @@ public class Mecanum extends Robot {
 
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
 
-    private LifterThreadPID lifterThread = null;
+    private LifterThread lifterThread = null;
     public LifterMethods.LIFTER currentState;
     private int levelIndex;
 
-    private boolean leftBumperInput;
-    private boolean rightBumperInput;
+    private SliderThreadPID sliderThreadPID;
+    private int[] sliderStates = {670,1200};
+    private int sliderIndex = -1;
+
+    private boolean oldLeftBumper;
+    private boolean oldRightBumper;
+    private boolean newLeftBumper;
+    private boolean newRightBumper;
 
     private boolean newButtonState = false;
     private boolean oldButtonState = false;
@@ -47,6 +54,11 @@ public class Mecanum extends Robot {
     private PositioningSystem positioningSystem;
     private ClawSystem clawSystem;
     private FoundationSystem foundationSystem;
+
+    private boolean startButton1 = false;
+    private boolean startButton2 = false;
+
+    private ExpansionHubEx expansionHub;
 
     @Override
     public void init() {
@@ -61,16 +73,20 @@ public class Mecanum extends Robot {
         globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight
                 , robot.horizontal, Utilities.TICKS_PER_INCH, 75);
         globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, Math.toRadians(initialOrientationDegrees));
-        globalPositionUpdate.reverseLeftEncoder();
-        globalPositionUpdate.reverseNormalEncoder();
+        globalPositionUpdate.reverseRightEncoder();
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
 
-        lifterThread = new LifterThreadPID(robot.leftLifter, robot.rightLifter);
+
+        lifterThread = new LifterThread(robot.leftLifter, robot.rightLifter);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
         currentState = LifterMethods.LIFTER.FLOAT;
         levelIndex = 0;
+
+        sliderThreadPID = new SliderThreadPID(robot.slider);
+        Thread sliderThread = new Thread(sliderThreadPID);
+        sliderThread.start();
 
         clawSystem = new ClawSystem(robot.claw, robot.flipper);
         clawSystem.Initial();
@@ -79,7 +95,7 @@ public class Mecanum extends Robot {
         positioningSystem = new PositioningSystem(robot.posLeft, robot.posRight);
         positioningSystem.Initial();
 
-        foundationSystem = new FoundationSystem(robot.foundationLeft,robot.foundationRight);
+        foundationSystem = new FoundationSystem(robot.foundationLeft, robot.foundationRight);
         foundationSystem.Detach();
     }
 
@@ -90,10 +106,10 @@ public class Mecanum extends Robot {
 
         if (controllerInputA.leftBumperOnce() && powerCoeff > 0.2) {
             powerCoeff -= 0.1;
-        } else if (controllerInputA.rightBumperOnce() && powerCoeff <= 1) {
+        } else if (controllerInputA.rightBumperOnce() && powerCoeff < 1) {
             powerCoeff += 0.1;
         }
-        powerCoeff = Range.clip(powerCoeff, 0.1, 1.0);
+        powerCoeff = Range.clip(powerCoeff, 0.2, 1.0);
 
         //------------------DRIVING-----------------------
         double drive, turn, strafe;
@@ -114,14 +130,18 @@ public class Mecanum extends Robot {
 
 
         //-----------------SLIDE ARM----------------------------
-        leftBumperInput = gamepad2.left_bumper;
-        rightBumperInput = gamepad2.right_bumper;
-        if (!leftBumperInput && !rightBumperInput)
-            robot.slider.setPower(0);
-        else if (leftBumperInput && !rightBumperInput)
-            robot.slider.setPower(-1);
-        else if (!leftBumperInput)
-            robot.slider.setPower(1);
+        newLeftBumper = gamepad2.left_bumper;
+        newRightBumper = gamepad2.right_bumper;
+        if ((newLeftBumper != oldLeftBumper) || (newRightBumper != oldRightBumper)) {
+            if (!newLeftBumper && !newRightBumper)
+                robot.slider.setPower(0);
+            else if (newLeftBumper && !newRightBumper)
+                robot.slider.setPower(-1);
+            else if (!newLeftBumper)
+                robot.slider.setPower(1);
+        }
+        oldLeftBumper = newLeftBumper;
+        oldRightBumper = newRightBumper;
 
 
         //--------------------LIFTER------------------------------------
@@ -159,20 +179,18 @@ public class Mecanum extends Robot {
         currentState = LifterMethods.getStateFromTicks(robot.leftLifter.getCurrentPosition());
 
         //-------------------SERVO CONTROL-----------------------------
+        startButton2 = gamepad2.start;
+        startButton1 = gamepad1.start;
 
-        if (controllerInputA.BOnce()) { //  deal with the claw
-            if (!clawSystem.isAttached())
-            {
+        if (controllerInputA.BOnce() && !startButton1) { //  deal with the claw
+            if (!clawSystem.isAttached()) {
                 clawSystem.Attach(); //when attaching claw, wait a little then detach the positioning system
-                sleep(500);
+                sleep(50);
                 positioningSystem.Detach();
-                sleep(200);
-            }
-            else clawSystem.Detach();
+            } else clawSystem.Detach();
         }
 
-        if (controllerInputB.AOnce()) // deal with the positioning system
-        {
+        if (controllerInputB.AOnce() && !startButton2) { // deal with the positioning system
             if (positioningSystem.isInitial())
                 positioningSystem.Detach();
             else if (positioningSystem.isAttached())
@@ -180,14 +198,20 @@ public class Mecanum extends Robot {
             else positioningSystem.Attach();
         }
 
-        if (controllerInputB.YOnce()) { //deal with the flipper
+        if(controllerInputB.BOnce() && !startButton2) {
+            if(sliderIndex == -1)
+                sliderIndex = 1;
+            sliderThreadPID.setTicks(sliderStates[sliderIndex++ % 2]);
+        }
+
+        if (controllerInputB.YOnce() && !startButton2) { //deal with the flipper
             if (clawSystem.isLowered())
                 clawSystem.raiseFlipper();
             else clawSystem.lowerFlipper();
         }
 
-        if(controllerInputA.AOnce()) { //deal with the foundation system
-            if(foundationSystem.isAttached())
+        if (controllerInputA.AOnce() && !startButton1 && !positioningSystem.isAttached()) { //deal with the foundation system
+            if (foundationSystem.isAttached())
                 foundationSystem.Detach();
             else foundationSystem.Attach();
         }
@@ -210,7 +234,7 @@ public class Mecanum extends Robot {
     }
 
 
-    private void moveSlider(int position) {
+    private void moveSliderPID(int position) {
         robot.slider.setTargetPosition(position);
         robot.slider.setTargetPositionTolerance(50);
         robot.slider.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);

@@ -46,8 +46,8 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         this.horizontalEncoder = horizontalEncoder;
         sleepTime = threadSleepDelay;
 
-        //robotEncoderWheelDistance = Double.parseDouble(ReadWriteFile.readFile(wheelBaseSeparationFile).trim()) * COUNTS_PER_INCH;
-        robotEncoderWheelDistance = 6.5 * COUNTS_PER_INCH;
+        robotEncoderWheelDistance = Double.parseDouble(ReadWriteFile.readFile(wheelBaseSeparationFile).trim()) * COUNTS_PER_INCH;
+//        robotEncoderWheelDistance = 6.5 * COUNTS_PER_INCH;
         this.horizontalEncoderTickPerDegreeOffset = Double.parseDouble(ReadWriteFile.readFile(horizontalTickOffsetFile).trim());
 
     }
@@ -65,7 +65,8 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
 
         //Calculate Angle
         changeInRobotOrientation = (leftChange - rightChange) / (robotEncoderWheelDistance);
-        robotOrientationRadians = ((robotOrientationRadians + changeInRobotOrientation)) % (2 * Math.PI);
+        robotOrientationRadians = ((robotOrientationRadians + changeInRobotOrientation));
+        robotOrientationRadians %= (2*Math.PI);
         robotOrientationDeg = Math.toDegrees(robotOrientationRadians) % 360;
 
         //Get the components of the motion

@@ -23,9 +23,7 @@ public class OdometryTest extends Robot {
         super.init();
 
         globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
-
-        globalPositionUpdate.reverseLeftEncoder();
-        globalPositionUpdate.reverseNormalEncoder();
+        globalPositionUpdate.reverseRightEncoder();
 
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();

@@ -1,9 +1,15 @@
 package org.firstinspires.ftc.teamcode.Misc;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Autonomous.Autonomous_RED;
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
 import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
+
+import static java.lang.Math.PI;
+import static java.lang.Math.abs;
 
 public class Utilities {
     public final static double TICKS_PER_INCH = 259.84481;
@@ -37,67 +43,129 @@ public class Utilities {
     }
 
 
-    public static void goToPosition(double xGoal, double yGoal, double preferredAngle,double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot) {
-        double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
-        double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
+
+    public static void goToPositionWIP(double x, double y, double movementSpeed, double preferredAngle, double turnSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Telemetry telemetry) {
+
+        double worldXPosition;
+        double worldYPosition;
         double worldAngle_rad;
 
+        preferredAngle = convertToUnitCircle(preferredAngle);
 
-        while((worldXPosition < xGoal && worldYPosition < yGoal) || (worldXPosition >xGoal && worldYPosition > yGoal)) {
+        while(true) {
             worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
             worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
-            worldAngle_rad = globalPositionUpdate.robotOrientationRadians;
-            double distToTarget = Math.hypot(xGoal - worldXPosition, yGoal - worldYPosition);
-            double absoluteAngleToTarget = Math.atan2(yGoal - worldYPosition, xGoal - worldXPosition);
-            double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad));
+            worldAngle_rad = convertToUnitCircle(globalPositionUpdate.robotOrientationRadians);
 
-            double relativeXToPoint = Math.cos(relativeAngleToPoint) * distToTarget;
-            double relativeYToPoint = Math.sin(relativeAngleToPoint) * distToTarget;
+            if(worldXPosition == x && worldYPosition == y && worldAngle_rad == preferredAngle) break;
 
-            double movementXPower = relativeXToPoint / (Math.abs(relativeXToPoint) + Math.abs(relativeYToPoint));
-            double movementYPower = relativeYToPoint / (Math.abs(relativeXToPoint) + Math.abs(relativeYToPoint));
+            double distanceToTarget = Math.hypot(x - worldXPosition, y - worldYPosition);
 
-            movementXPower = Range.clip(movementXPower,-1,1);
-            movementYPower = Range.clip(movementYPower, -1 , 1);
+            double absoluteAngleToTarget = Math.atan2(y - worldYPosition, x - worldXPosition);
+            double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad - Math.toRadians(90)));
+
+            double relativeXToPoint = Math.cos(relativeAngleToPoint) * distanceToTarget;
+            double relativeYToPoint = Math.sin(relativeAngleToPoint) * distanceToTarget;
+
+            double movementXPower = relativeXToPoint / (abs(relativeXToPoint) + abs(relativeYToPoint));
+            double movementYPower = relativeYToPoint / (abs(relativeXToPoint) + abs(relativeYToPoint));
+            movementXPower = Range.clip(movementXPower, -1, 1);
+            movementYPower = Range.clip(movementYPower, -1, 1);
+
+            //double relativeTurnAngle = relativeAngleToPoint - Math.toRadians(180) + preferredAngle;  //i don't fucking understand this line so i used my own
 
             double relativeTurnAngle = preferredAngle - worldAngle_rad;
 
-            double movementTurn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1);
+            double _movement_turn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1) * turnSpeed;
+            double _movement_x = movementXPower * movementSpeed;
+            double _movement_y = movementYPower * movementSpeed;
 
-            double d = movementYPower;
-            double t = 0;
-            double s = -movementXPower;
-            double fl = d + t - s;
-            double bl = d + t + s;
-            double fr = d - t + s;
-            double br = d - t - s;
+            if(distanceToTarget < 30){
+                _movement_x = _movement_x * 0.5;
+                _movement_y = _movement_y * 0.5;
+            }
+            if (distanceToTarget < 10) _movement_turn = 0;
 
-            double powerFraction = 1;
-
-            if(distToTarget < 20)  {
-                powerFraction = 0.5;
+            if (distanceToTarget < 7 && _movement_turn == 0) {
+                _movement_x = _movement_y = 0;
             }
 
-            if(distToTarget < 3) {
-                break;
-            }
+            double drive = _movement_y;
+            double strafe = -_movement_x;
+            double turn = _movement_turn;
 
-            robot.frontLeftWheel.setPower(fl * powerFraction * moveSpeed);
-            robot.frontRightWheel.setPower(fr * powerFraction * moveSpeed);
-            robot.backLeftWheel.setPower(bl * powerFraction * moveSpeed);
-            robot.backRightWheel.setPower(br * powerFraction * moveSpeed);
+            double leftFrontPower = Range.clip(drive + turn - strafe, -1.0, 1.0);
+            double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
+            double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
+            double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
+
+            if(  (distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0 && _movement_turn == 0) ) break;
+
+            robot.frontLeftWheel.setPower(leftFrontPower);
+            robot.frontRightWheel.setPower(rightFrontPower);
+            robot.backLeftWheel.setPower(leftBackPower);
+            robot.backRightWheel.setPower(rightBackPower);
+
+            telemetry.addData(" Dist to trgt",distanceToTarget);
+            telemetry.addData("absoluteAngleToTarget: ",Math.toDegrees(absoluteAngleToTarget));
+            telemetry.addData("relativeAngleToPoint",Math.toDegrees(relativeAngleToPoint));
+            telemetry.addData("relativeXToPoint",relativeXToPoint);
+            telemetry.addData("relativeYToPoint",relativeYToPoint);
+            telemetry.addData("relativeTurnAngle",Math.toDegrees(relativeTurnAngle));
+            telemetry.update();
+
+
         }
 
     }
 
-    private static double AngleWrap(double angle) {
-        while (angle < -Math.PI)
-            angle += 2 * Math.PI;
+    public static double AngleWrap(double angle) {
+        while (angle < -PI)
+            angle += 2 * PI;
 
-        while (angle > Math.PI)
-            angle -= 2 * Math.PI;
+        while (angle > PI)
+            angle -= 2 * PI;
 
         return angle;
     }
+
+
+    final static double TWO_PI = 2 * PI;
+    final static double HALF_PI = PI / 2;
+
+    private static double convertToUnitCircle(double angle) {
+        //reduce back to unit circle
+        if(angle > TWO_PI) angle -= TWO_PI;
+        if(angle >= 0 && angle < HALF_PI) {  //first quadrant
+            angle =  abs(angle - HALF_PI);
+            if(angle > TWO_PI) angle -= TWO_PI;
+            return angle;
+        }
+
+        if(angle >= HALF_PI && angle <=PI)   //second quadrant
+        {
+            angle = 3*HALF_PI -(angle + PI - TWO_PI);
+
+            if(angle > TWO_PI) angle -= TWO_PI;
+            return angle;
+        }
+
+        if(angle > PI && angle <= 3*HALF_PI) //third quadrant
+        {
+            angle =  3*HALF_PI + (PI - angle);
+            if(angle > TWO_PI) angle -= TWO_PI;
+            return angle;
+        }
+
+        if(angle > 3*HALF_PI && angle <=TWO_PI) //fourth quadrant
+        {
+            angle = PI - (angle + PI) + TWO_PI + HALF_PI;
+            if(angle > TWO_PI) angle -= TWO_PI;
+            return angle;
+        }
+        return angle;
+    }
+
+
 
 }

@@ -34,9 +34,6 @@ public class DrivingTeleOp extends Robot {
         telemetry.update();
 
         globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
-
-        globalPositionUpdate.reverseLeftEncoder();
-        globalPositionUpdate.reverseNormalEncoder();
         globalPositionUpdate.reverseRightEncoder();
 
         Thread positionThread = new Thread(globalPositionUpdate);
