@@ -4,8 +4,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
-import org.firstinspires.ftc.teamcode.Hardware;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+
+import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.utilities.Utilities;
+
+import org.openftc.revextensions2.ExpansionHubMotor;
 
 import java.io.File;
 
@@ -16,28 +20,28 @@ import java.io.File;
 @TeleOp(name = "Odometry System Calibration", group = "Calibration")
 public class OdometryCalibration extends LinearOpMode {
 
-    Hardware robot = new Hardware();
+    private Hardware robot = new Hardware();
 
-    final double PIVOT_SPEED = 0.4;
+    private final double PIVOT_SPEED = 0.5;
 
     //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
-    final double COUNTS_PER_INCH = 1600 / (Math.PI * 1.96);
+    private final double COUNTS_PER_INCH = Utilities.TICKS_PER_INCH;
 
-    ElapsedTime timer = new ElapsedTime();
+    private ElapsedTime timer = new ElapsedTime();
 
-    double horizontalTickOffset = 0;
+    private double horizontalTickOffset = 0;
 
     //Text files to write the values to. The files are stored in the robot controller under Internal Storage\FIRST\settings
-    File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
-    File horizontalTickOffsetFile = AppUtil.getInstance().getSettingsFile("horizontalTickOffset.txt");
+    private File wheelBaseSeparationFile = AppUtil.getInstance().getSettingsFile("wheelBaseSeparation.txt");
+    private File horizontalTickOffsetFile = AppUtil.getInstance().getSettingsFile("horizontalTickOffset.txt");
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
+        robot.initIMU();
 
-        telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
-        telemetry.clear();
+        robot.verticalRight.setDirection(ExpansionHubMotor.Direction.REVERSE);
 
         //Odometry System Calibration Init Complete
         telemetry.addData("Odometry System Calibration Status", "Init Complete");
@@ -133,5 +137,3 @@ public class OdometryCalibration extends LinearOpMode {
     }
 
 }
-
-

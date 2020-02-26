@@ -98,7 +98,7 @@
     <!-- ======================================================================================= -->
 
     <!-- Logitech HD Pro Webcam C920, Calibrated by Robert Atkinson, 2018.05.30 using 3DF Zephyr -->
-    <!-- <Camera vid="Logitech" pid="0x082D">
+    <Camera vid="Logitech" pid="0x082D">
 
         <Calibration
             size="640 480"
@@ -106,8 +106,9 @@
             principalPoint="319.803f, 241.251f"
             distortionCoefficients="0.1208, -0.261599, 0, 0, 0.10308, 0, 0, 0"
             />
+    </Camera>
 
-        <Calibration
+       <!-- <Calibration
             size="800 600"
             focalLength="775.79f, 775.79f"
             principalPoint="400.898f, 300.79f"

@@ -1,18 +1,19 @@
-package org.firstinspires.ftc.teamcode.utils;
+package org.firstinspires.ftc.teamcode.computervision;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
@@ -25,8 +26,8 @@ import java.util.List;
  * monitor: 640 x 480
  *
  */
-@Autonomous(name= "opencvSkystoneDetector", group="Sky autonomous")
-public class opencvSkystoneDetector extends LinearOpMode {
+@Autonomous(name= "Detector Autonomous", group="autonomous")
+public class DetectorAutonomous extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -48,18 +49,17 @@ public class opencvSkystoneDetector extends LinearOpMode {
     private final int rows = 640;
     private final int cols = 480;
 
-    OpenCvInternalCamera phoneCam;
+    OpenCvCamera webcam;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        phoneCam = OpenCvCameraFactory.getInstance().createInternalCamera(OpenCvInternalCamera.CameraDirection.BACK, cameraMonitorViewId);
-        phoneCam.openCameraDevice();//open camera
-        phoneCam.setPipeline(new StageSwitchingPipeline());//different stages
-        phoneCam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);//display on RC
-        //width, height
-        //width = height in this case, because camera is in portrait mode.
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        webcam.openCameraDevice();
+        webcam.setPipeline(new StageSwitchingPipeline());
+        webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
+
 
         waitForStart();
         runtime.reset();
@@ -211,3 +211,4 @@ public class opencvSkystoneDetector extends LinearOpMode {
 
     }
 }
+

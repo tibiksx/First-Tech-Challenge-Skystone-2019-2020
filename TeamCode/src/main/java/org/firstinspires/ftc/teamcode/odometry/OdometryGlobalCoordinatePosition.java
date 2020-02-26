@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.odometry;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.openftc.revextensions2.ExpansionHubMotor;
 
 import java.io.File;
 
@@ -13,12 +13,12 @@ import java.io.File;
  */
 public class OdometryGlobalCoordinatePosition implements Runnable{
 
-    private DcMotor verticalEncoderLeft, verticalEncoderRight, horizontalEncoder;
+    private ExpansionHubMotor verticalEncoderLeft, verticalEncoderRight, horizontalEncoder;
 
     public boolean isRunning = true;
 
     public double verticalRightEncoderWheelPosition = 0, verticalLeftEncoderWheelPosition = 0, normalEncoderWheelPosition = 0,  changeInRobotOrientation = 0;
-    public double robotGlobalXCoordinatePosition = 0, robotGlobalYCoordinatePosition = 0, robotOrientationRadians = 0;
+    public volatile double robotGlobalXCoordinatePosition = 0, robotGlobalYCoordinatePosition = 0, robotOrientationRadians = 0, robotOrientationDeg = 0;
     public double previousVerticalRightEncoderWheelPosition = 0, previousVerticalLeftEncoderWheelPosition = 0, prevNormalEncoderWheelPosition = 0;
 
     public double robotEncoderWheelDistance;
@@ -40,13 +40,14 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
      * @param horizontalEncoder horizontal odometry encoder, perpendicular to the other two odometry encoder wheels
      * @param threadSleepDelay delay in milliseconds for the GlobalPositionUpdate thread (50-75 milliseconds is suggested)
      */
-    public OdometryGlobalCoordinatePosition(DcMotor verticalEncoderLeft, DcMotor verticalEncoderRight, DcMotor horizontalEncoder, double COUNTS_PER_INCH, int threadSleepDelay){
+    public OdometryGlobalCoordinatePosition(ExpansionHubMotor verticalEncoderLeft, ExpansionHubMotor verticalEncoderRight, ExpansionHubMotor horizontalEncoder, double COUNTS_PER_INCH, int threadSleepDelay){
         this.verticalEncoderLeft = verticalEncoderLeft;
         this.verticalEncoderRight = verticalEncoderRight;
         this.horizontalEncoder = horizontalEncoder;
         sleepTime = threadSleepDelay;
 
         robotEncoderWheelDistance = Double.parseDouble(ReadWriteFile.readFile(wheelBaseSeparationFile).trim()) * COUNTS_PER_INCH;
+//        robotEncoderWheelDistance = 6.5 * COUNTS_PER_INCH;
         this.horizontalEncoderTickPerDegreeOffset = Double.parseDouble(ReadWriteFile.readFile(horizontalTickOffsetFile).trim());
 
     }
@@ -65,41 +66,24 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         //Calculate Angle
         changeInRobotOrientation = (leftChange - rightChange) / (robotEncoderWheelDistance);
         robotOrientationRadians = ((robotOrientationRadians + changeInRobotOrientation));
+        robotOrientationRadians %= (2*Math.PI);
+        robotOrientationDeg = Math.toDegrees(robotOrientationRadians) % 360;
 
         //Get the components of the motion
         normalEncoderWheelPosition = (horizontalEncoder.getCurrentPosition()*normalEncoderPositionMultiplier);
         double rawHorizontalChange = normalEncoderWheelPosition - prevNormalEncoderWheelPosition;
         double horizontalChange = rawHorizontalChange - (changeInRobotOrientation*horizontalEncoderTickPerDegreeOffset);
 
-        double p = ((rightChange + leftChange) / 2);
-        double n = horizontalChange;
+        double robotCenter = ((rightChange + leftChange) / 2);
 
         //Calculate and update the position values
-        robotGlobalXCoordinatePosition = robotGlobalXCoordinatePosition + (p*Math.sin(robotOrientationRadians) + n*Math.cos(robotOrientationRadians));
-        robotGlobalYCoordinatePosition = robotGlobalYCoordinatePosition + (p*Math.cos(robotOrientationRadians) - n*Math.sin(robotOrientationRadians));
+        robotGlobalXCoordinatePosition = robotGlobalXCoordinatePosition + (robotCenter*Math.sin(robotOrientationRadians) + horizontalChange *Math.cos(robotOrientationRadians));
+        robotGlobalYCoordinatePosition = robotGlobalYCoordinatePosition + (robotCenter*Math.cos(robotOrientationRadians) - horizontalChange *Math.sin(robotOrientationRadians));
 
         previousVerticalLeftEncoderWheelPosition = verticalLeftEncoderWheelPosition;
         previousVerticalRightEncoderWheelPosition = verticalRightEncoderWheelPosition;
         prevNormalEncoderWheelPosition = normalEncoderWheelPosition;
     }
-
-    /**
-     * Returns the robot's global x coordinate
-     * @return global x coordinate
-     */
-    public double returnXCoordinate(){ return robotGlobalXCoordinatePosition; }
-
-    /**
-     * Returns the robot's global y coordinate
-     * @return global y coordinate
-     */
-    public double returnYCoordinate(){ return robotGlobalYCoordinatePosition; }
-
-    /**
-     * Returns the robot's global orientation
-     * @return global orientation, in degrees
-     */
-    public double returnOrientation(){ return Math.toDegrees(robotOrientationRadians) % 360; }
 
     /**
      * Stops the position update thread
@@ -130,6 +114,12 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         }
     }
 
+    public void setInitialCoordinates(double x, double y, double angle_rad) {
+        this.robotGlobalXCoordinatePosition = x;
+        this.robotGlobalYCoordinatePosition = y;
+        this.robotOrientationRadians = angle_rad;
+    }
+
     /**
      * Runs the thread
      */
@@ -145,5 +135,3 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
         }
     }
 }
-
-
