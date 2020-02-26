@@ -33,20 +33,20 @@ public class SliderThreadPID implements Runnable {
 
             if (currentTicks != lastTicks) //we can move the motor to the new value
             {
-
+                if(currentTicks < lastTicks) { //backward using PID
+                    slider.setTargetPosition(currentTicks);
+                    slider.setTargetPositionTolerance(70);
+                    slider.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
+                }
                 finished = false;
-                slider.setTargetPosition(currentTicks);
-                slider.setTargetPositionTolerance(100);
-                slider.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
-
                 if (slider.getCurrentPosition() < currentTicks) {
                     slider.setPower(1);
-                    while (slider.getCurrentPosition() < currentTicks-40 && !finished) {
+                    while (slider.getCurrentPosition() < currentTicks - 60 && !finished) {
 
                     }
                 } else {
                     slider.setPower(-1);
-                    while (slider.getCurrentPosition() > currentTicks+40 && !finished) {
+                    while (slider.getCurrentPosition() > currentTicks + 60 && !finished) {
                     }
                 }
                 slider.setPower(0);

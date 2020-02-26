@@ -36,7 +36,7 @@ public class Mecanum extends Robot {
     private int levelIndex;
 
     private SliderThreadPID sliderThreadPID;
-    private int[] sliderStates = {670,1200};
+    private int[] sliderStates = {200,1200};
     private int sliderIndex = -1;
 
     private boolean oldLeftBumper;

@@ -40,9 +40,9 @@ public class Autonomous_RED extends LinearOpMode {
 
     private SkystoneDetector skystoneDetector;
 
-    private final double initialXCoordinate =0;//= Utilities.CM_TO_TICKS(336);
-    private final double initialYCoordinate =0;//= Utilities.CM_TO_TICKS(98);
-    private final double initialOrientationDegrees = 0;//-90;
+    private final double initialXCoordinate = Utilities.CM_TO_TICKS(336);
+    private final double initialYCoordinate = Utilities.CM_TO_TICKS(98);
+    private final double initialOrientationDegrees = -90;
 
     private Orientation lastAngles = new Orientation();
     private double globalAngle;
@@ -81,17 +81,32 @@ public class Autonomous_RED extends LinearOpMode {
         sliderThread.start();
 
         skystoneDetector = new SkystoneDetector(hardwareMap,telemetry);
-        sleep(50);
         //skystoneDetector.init();
 
         PIDController pidRotate = new PIDController(0.025, 0.0001, 0.00001);
 
         waitForStart();
 
-        //goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x-30 ,FieldStats.REDFoundation.DEFAULT_placingPosition.y,0.7,globalPositionUpdate,robot);
-        goToPositionTurning(60,60,0.7,Math.toRadians(90),0.8,globalPositionUpdate,robot,telemetry);
-
-
+        positioningSystem.Detach();
+        sliderThreadPID.setTicks(600);
+        goToPositionNoTurning(FieldStats.REDStones.fifthStone.getPosition().x,FieldStats.REDStones.fifthStone.getPosition().y-5,0.7,globalPositionUpdate,robot);
+        sleep(500);
+        clawSystem.lowerFlipper();
+        sleep(500);
+        goToPositionNoTurning(FieldStats.REDStones.fifthStone.getPosition().x+40,FieldStats.REDStones.fifthStone.getPosition().y,1,globalPositionUpdate,robot);
+        positioningSystem.Attach();
+        sleep(500);
+        goToPositionNoTurning(FieldStats.REDStones.fifthStone.getPosition().x+40,200,1,globalPositionUpdate,robot);
+        sleep(100);
+        goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x,FieldStats.REDFoundation.DEFAULT_placingPosition.y,0.8,globalPositionUpdate,robot);
+        clawSystem.Attach();
+        positioningSystem.Detach();
+        sleep(100);
+        lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
+        sliderThreadPID.setTicks(1000);
+        goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x-40,FieldStats.REDFoundation.DEFAULT_placingPosition.y,0.7,globalPositionUpdate,robot);
+        clawSystem.Detach();
+        sleep(500);
 
 //        int[] stoneValues = skystoneDetector.scan();
 //        int valLeft = stoneValues[0];
@@ -122,52 +137,7 @@ public class Autonomous_RED extends LinearOpMode {
 //                break;
 //            }
 //        }
-//        telemetry.addData("Robot",Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition) + "  " + Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition) + " " + globalPositionUpdate.robotOrientationDeg);
-//        telemetry.addData("Skystone: ",closestStone1.getPosition().x + " " + closestStone1.getPosition().y);
-//        telemetry.update();
-//        sleep(2000);
-//        //only if we found a skystone
-//        if(!(closestStone1.getPosition().x == -1 && closestStone1.getPosition().y == -1)) {
 //
-//            telemetry.addData("Moving to: ",closestStone1.getPosition().x + "  " + closestStone1.getPosition().y);
-//            telemetry.update();
-//            //move slider forward
-//            sliderThreadPID.setTicks(1200);
-//            //go to the stone's position
-//            Utilities.goToPositionNoTurning(closestStone1.getPosition().x, closestStone1.getPosition().y, 0.7, globalPositionUpdate, robot,telemetry);
-//            sleep(500);
-//            //catch it
-//            clawSystem.Attach();
-//            sleep(600);
-//            //pull it back
-//            sliderThreadPID.setTicks(670);
-//
-//            telemetry.addData("Caught the first skystone","");
-//            telemetry.update();
-//            sleep(200);
-//            //back off a little
-//            Utilities.goToPositionNoTurning(closestStone1.getPosition().x-20, closestStone1.getPosition().y, 0.7, globalPositionUpdate, robot,telemetry);
-//            sleep(1000);
-//            Utilities.goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x,FieldStats.REDFoundation.DEFAULT_placingPosition.y,0.5,globalPositionUpdate,robot,telemetry);
-//            sleep(1000);
-//            foundationSystem.Attach();
-//            sleep(500);
-//            //TODO Arc here
-//            foundationSystem.Detach();
-//
-//            //find the next skystone
-//            FieldStats.Stone closestStone2 = new FieldStats.Stone(new Point(-1,-1),false);
-//            for(int i = closestStoneIndex-1; i>=1; i--) {
-//                if(FieldStats.REDStones.stoneArray[i].isSkystone()) {
-//                    closestStone2 = FieldStats.REDStones.stoneArray[i];
-//                    closestStoneIndex = i;
-//                    break;
-//                }
-//            }
-//
-//
-//        }
-
     }
 
     private void resetAngle()
@@ -284,42 +254,60 @@ public class Autonomous_RED extends LinearOpMode {
     }
 
 
-    public void goToPositionNoTurning(double xGoal, double yGoal,double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot) {
-        double worldXPosition;
-        double worldYPosition;
+    public void goToPositionNoTurning(double x, double y,double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot) {
+        double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
+        double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
         double worldAngle_rad;
 
+        double initialDistance = Math.hypot(x - worldXPosition, y - worldYPosition);
 
         while(opModeIsActive()) {
             worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
             worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
             worldAngle_rad = covertToUnitCircle(globalPositionUpdate.robotOrientationRadians);
 
-            double distToTarget = Math.hypot(xGoal - worldXPosition, yGoal - worldYPosition);
-            double absoluteAngleToTarget = Math.atan2(yGoal - worldYPosition, xGoal - worldXPosition);
-            double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad - toRadians(90)));
+            if(worldXPosition == x && worldYPosition == y) break;
 
-            double relativeXToPoint = Math.cos(relativeAngleToPoint) * distToTarget;
-            double relativeYToPoint = Math.sin(relativeAngleToPoint) * distToTarget;
+            double distanceToTarget = Math.hypot(x - worldXPosition, y - worldYPosition);
+
+            double absoluteAngleToTarget = Math.atan2(y - worldYPosition, x - worldXPosition);
+            double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad - Math.toRadians(90)));
+
+            double relativeXToPoint = Math.cos(relativeAngleToPoint) * distanceToTarget;
+            double relativeYToPoint = Math.sin(relativeAngleToPoint) * distanceToTarget;
 
             double movementXPower = relativeXToPoint / (abs(relativeXToPoint) + abs(relativeYToPoint));
             double movementYPower = relativeYToPoint / (abs(relativeXToPoint) + abs(relativeYToPoint));
+            movementXPower = Range.clip(movementXPower, -1, 1);
+            movementYPower = Range.clip(movementYPower, -1, 1);
 
-            movementXPower = Range.clip(movementXPower,-1,1);
-            movementYPower = Range.clip(movementYPower, -1 , 1);
+
 
             double _movement_x = movementXPower * moveSpeed;
             double _movement_y = movementYPower * moveSpeed;
 
-            if(abs(relativeXToPoint) < 4) _movement_x = 0;
-            if(abs(relativeYToPoint) < 4) _movement_y = 0;
+            if(initialDistance - distanceToTarget < 15) {_movement_x *= 0.7; _movement_y*=0.7;}
 
-            if(distToTarget < 15)  {
-                _movement_x = _movement_x * 0.7;
-                _movement_y = _movement_y * 0.7;
+            if(distanceToTarget < 20){
+                _movement_x = _movement_x * 0.5;
+                _movement_y = _movement_y * 0.5;
+            } else if(distanceToTarget < 10) {
+                _movement_x = _movement_x * 0.3;
+                _movement_y = _movement_y * 0.3;
             }
 
-            if(distToTarget < 5) {
+
+            double drive = _movement_y;
+            double strafe = -_movement_x;
+            double turn = 0;
+
+            double leftFrontPower = Range.clip(drive + turn - strafe, -1.0, 1.0);
+            double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
+            double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
+            double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
+
+            if(  (distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0) )
+            {
                 robot.frontLeftWheel.setPower(0);
                 robot.frontRightWheel.setPower(0);
                 robot.backLeftWheel.setPower(0);
@@ -327,19 +315,20 @@ public class Autonomous_RED extends LinearOpMode {
                 break;
             }
 
-            double d = _movement_y;
-            double t = 0;
-            double s = -_movement_x;
-            double fl = d + t - s;
-            double bl = d + t + s;
-            double fr = d - t + s;
-            double br = d - t - s;
 
-            robot.frontLeftWheel.setPower(fl);
-            robot.frontRightWheel.setPower(fr);
-            robot.backLeftWheel.setPower(bl);
-            robot.backRightWheel.setPower(br);
+            robot.frontLeftWheel.setPower(leftFrontPower);
+            robot.frontRightWheel.setPower(rightFrontPower);
+            robot.backLeftWheel.setPower(leftBackPower);
+            robot.backRightWheel.setPower(rightBackPower);
+
+            telemetry.addData(" Dist to target",distanceToTarget);
+            telemetry.addData("Angle:",globalPositionUpdate.robotOrientationDeg);
+            telemetry.addData("X pos:",worldXPosition);
+            telemetry.addData("Y pos: ",worldYPosition);
+            telemetry.update();
+
         }
+
 
     }
 
@@ -347,16 +336,20 @@ public class Autonomous_RED extends LinearOpMode {
 
     public void goToPositionTurning(double x, double y, double movementSpeed, double preferredAngle, double turnSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Telemetry telemetry) {
 
-        double worldXPosition;
-        double worldYPosition;
+        double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);;
+        double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);;
         double worldAngle_rad;
 
+        double initialDistance = Math.hypot(x - worldXPosition, y - worldYPosition);
+
+        if(preferredAngle <= TWO_PI) preferredAngle+=TWO_PI;
+        if(preferredAngle >= TWO_PI) preferredAngle-=TWO_PI;
         preferredAngle = covertToUnitCircle(preferredAngle);
 
         while(opModeIsActive()) {
             worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
             worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
-            worldAngle_rad = covertToUnitCircle(Math.toRadians(getZAngle()));
+            worldAngle_rad = covertToUnitCircle(globalPositionUpdate.robotOrientationRadians); //covertToUnitCircle(Math.toRadians(getZAngle()));
 
             if(worldXPosition == x && worldYPosition == y && worldAngle_rad == preferredAngle) break;
 
@@ -384,13 +377,16 @@ public class Autonomous_RED extends LinearOpMode {
             double _movement_x = movementXPower * movementSpeed;
             double _movement_y = movementYPower * movementSpeed;
 
+            if(initialDistance - distanceToTarget < 5) {_movement_x *= 0.7; _movement_y*=0.7;}
 
-            if(distanceToTarget < 15){
-                _movement_x = _movement_x * 0.7;
-                _movement_y = _movement_y * 0.7;
-            } else if(distanceToTarget < 7) {
+            if(abs(relativeTurnAngle) < Math.toRadians(15)) _movement_turn*=0.3;
+
+            if(distanceToTarget < 20){
                 _movement_x = _movement_x * 0.5;
                 _movement_y = _movement_y * 0.5;
+            } else if(distanceToTarget < 10) {
+                _movement_x = _movement_x * 0.3;
+                _movement_y = _movement_y * 0.3;
             }
 
 
@@ -403,7 +399,15 @@ public class Autonomous_RED extends LinearOpMode {
             double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
             double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
-            if(  (distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0 && _movement_turn == 0) ) break;
+            if(  (distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0 && _movement_turn == 0) )
+            {
+                robot.frontLeftWheel.setPower(0);
+                robot.frontRightWheel.setPower(0);
+                robot.backLeftWheel.setPower(0);
+                robot.backRightWheel.setPower(0);
+                break;
+            }
+
 
             robot.frontLeftWheel.setPower(leftFrontPower);
             robot.frontRightWheel.setPower(rightFrontPower);
@@ -411,9 +415,10 @@ public class Autonomous_RED extends LinearOpMode {
             robot.backRightWheel.setPower(rightBackPower);
 
             telemetry.addData(" Dist to target",distanceToTarget);
-            telemetry.addData("Angle:",globalPositionUpdate.robotOrientationDeg);
+            telemetry.addData("Angle:",Math.toDegrees(worldAngle_rad));
+            telemetry.addData("X pos:",worldXPosition);
+            telemetry.addData("Y pos: ",worldYPosition);
             telemetry.update();
-
 
         }
 

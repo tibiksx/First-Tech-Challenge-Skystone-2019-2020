@@ -14,7 +14,7 @@ public class FieldStats {
     }
 
     public static class REDFoundation {
-        public static Point DEFAULT_placingPosition = new Point(260.0,305.0);
+        public static Point DEFAULT_placingPosition = new Point(260,305.0);
         public static Point AFTER_AUTO_placingPosition = new Point(292.02,288.3);
     }
 
@@ -26,12 +26,12 @@ public class FieldStats {
 
     public static class REDStones {
         public static Stone nullStone = new Stone(new Point(0,0),false);
-        public static Stone firstStone = new Stone(new Point(231.24,10.16),false);
-        public static Stone secondStone = new Stone(new Point(231.24,10.16 + 20.32),false);
-        public static Stone thirdStone = new Stone(new Point(231.24,10.16 + 20.32 + 20.32),false);
-        public static Stone fourthStone = new Stone(new Point(231.24,10.16 + 20.32 + 20.32 + 20.32),false);
-        public static Stone fifthStone = new Stone(new Point(231.24,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
-        public static Stone sixthStone = new Stone(new Point(231.24,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public static Stone firstStone = new Stone(new Point(231.24+30,10.16),false);
+        public static Stone secondStone = new Stone(new Point(231.24+30,10.16 + 20.32),false);
+        public static Stone thirdStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32),false);
+        public static Stone fourthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32),false);
+        public static Stone fifthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public static Stone sixthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32),false);
 
         public static Stone[] stoneArray = {nullStone, firstStone, secondStone, thirdStone, fourthStone, fifthStone, sixthStone};
 

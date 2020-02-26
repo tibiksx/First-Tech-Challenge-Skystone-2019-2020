@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Odometry;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
@@ -38,6 +39,8 @@ public class OdometryCalibration extends LinearOpMode {
 
         robot.init(hardwareMap);
         robot.initIMU();
+
+        robot.verticalRight.setDirection(ExpansionHubMotor.Direction.REVERSE);
 
         //Odometry System Calibration Init Complete
         telemetry.addData("Odometry System Calibration Status", "Init Complete");
