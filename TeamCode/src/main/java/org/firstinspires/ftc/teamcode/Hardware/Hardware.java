@@ -7,6 +7,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.ComputerVision.SkystoneDetector;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.ExpansionHubServo;
 
@@ -41,6 +45,10 @@ public class Hardware {
     public ExpansionHubServo flipper = null;
     public ExpansionHubServo foundationLeft = null;
     public ExpansionHubServo foundationRight =null;
+
+    //---------CAMERA-----------------------------
+    public OpenCvCamera webcam;
+    public int cameraMonitorViewId;
 
     private HardwareMap hwMap = null;
 
@@ -132,7 +140,9 @@ public class Hardware {
         foundationLeft = hwMap.get(ExpansionHubServo.class,"foundLeft");
         foundationRight = hwMap.get(ExpansionHubServo.class,"foundRight");
 
-
+        //---------------------CAMERA----------------------------------
+        cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hwMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
     }
 
     public void initIMU() {

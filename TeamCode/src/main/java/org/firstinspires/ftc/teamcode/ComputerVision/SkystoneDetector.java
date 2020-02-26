@@ -37,23 +37,22 @@ public class SkystoneDetector {
 
     public OpenCvCamera webcam;
 
-    private HardwareMap hardwareMap;
     private Telemetry telemetry;
+
+    private int cameraMonitorViewId;
 
     private final int rows = 640;
     private final int cols = 480;
 
-    public SkystoneDetector(HardwareMap hardwareMap, Telemetry telemetry) {
-
-        this.hardwareMap = hardwareMap;
+    public SkystoneDetector(OpenCvCamera webcam, Telemetry telemetry, int cameraMonitorViewId) {
+        this.cameraMonitorViewId = cameraMonitorViewId;
+        this.webcam = webcam;
         this.telemetry = telemetry;
     }
 
     public void init() {
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         webcam.openCameraDevice();
-        webcam.setPipeline(new StageSwitchingPipeline());
+        webcam.setPipeline(new SkystoneDetector.StageSwitchingPipeline());
         webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
         telemetry.addData("Init complete","Proceed");
         telemetry.update();

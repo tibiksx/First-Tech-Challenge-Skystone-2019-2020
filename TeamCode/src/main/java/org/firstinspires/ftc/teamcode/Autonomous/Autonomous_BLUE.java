@@ -66,7 +66,7 @@ public class Autonomous_BLUE extends LinearOpMode {
         Thread sliderThread = new Thread(sliderThreadPID);
         sliderThread.start();
 
-        skystoneDetector = new SkystoneDetector(hardwareMap,telemetry);
+        skystoneDetector = new SkystoneDetector(robot.webcam,telemetry,robot.cameraMonitorViewId);
         skystoneDetector.init();
 
         waitForStart();
