@@ -9,35 +9,42 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
-import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.computervision.SkystoneDetector;
-
+import org.firstinspires.ftc.teamcode.hardware.Hardware;
+import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalCoordinatePosition;
+import org.firstinspires.ftc.teamcode.subsystems.ClawSystem;
+import org.firstinspires.ftc.teamcode.subsystems.FoundationSystem;
+import org.firstinspires.ftc.teamcode.subsystems.InitThread;
+import org.firstinspires.ftc.teamcode.subsystems.LifterThread;
+import org.firstinspires.ftc.teamcode.subsystems.PositioningSystem;
+import org.firstinspires.ftc.teamcode.subsystems.SliderThreadPID;
 import org.firstinspires.ftc.teamcode.utilities.FieldStats;
 import org.firstinspires.ftc.teamcode.utilities.LifterMethods;
 import org.firstinspires.ftc.teamcode.utilities.PIDController;
 import org.firstinspires.ftc.teamcode.utilities.Utilities;
-
-import org.firstinspires.ftc.teamcode.subsystems.LifterThread;
-import org.firstinspires.ftc.teamcode.subsystems.ClawSystem;
-import org.firstinspires.ftc.teamcode.subsystems.FoundationSystem;
-import org.firstinspires.ftc.teamcode.subsystems.PositioningSystem;
-import org.firstinspires.ftc.teamcode.subsystems.SliderThreadPID;
-
-import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalCoordinatePosition;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.toRadians;
 import static org.firstinspires.ftc.teamcode.utilities.Utilities.AngleWrap;
 
-@Autonomous(name = "Auto Full Stack Blue", group = "Autonomous")
-public class FullStackBlue extends LinearOpMode {
+/**
+ * Autonomous Program that completes all tasks in a time record
+ * Masterclass Copyright on Francisc Czobor - mentor of RO017 TITANS
+ *             - term origin: an expensive-as-fuck Web Dev Course that basically teaches you nothing
+ *             - couldn't be more suggestive
+ * Red.
+ */
+
+@Autonomous(name = "Proficient Masterclass Red", group = "Autonomous")
+public class ProficientMasterclassRed extends LinearOpMode {
 
     private Hardware robot = new Hardware();
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
 
+    private InitThread initThread = null;
     private LifterThread lifterThread = null;
+    private SliderThreadPID sliderThreadPID = null;
 
     private ClawSystem clawSystem = null;
     private PositioningSystem positioningSystem = null;
@@ -58,6 +65,10 @@ public class FullStackBlue extends LinearOpMode {
         robot.init(hardwareMap);
         robot.initIMU();
 
+        skystoneDetector = new SkystoneDetector(robot.webcam, telemetry,robot.cameraMonitorViewId);
+        skystoneDetector.init();
+        skystoneDetector.startStreaming();
+
         globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 50);
         globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, toRadians(initialOrientationDegrees));
         globalPositionUpdate.reverseRightEncoder();
@@ -74,24 +85,26 @@ public class FullStackBlue extends LinearOpMode {
         foundationSystem = new FoundationSystem(robot.foundationLeft, robot.foundationRight);
         foundationSystem.detach();
 
-
         lifterThread = new LifterThread(robot.leftLifter, robot.rightLifter, robot.button);
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
-        SliderThreadPID sliderThreadPID = new SliderThreadPID(robot.slider);
+        sliderThreadPID = new SliderThreadPID(robot.slider);
         Thread sliderThread = new Thread(sliderThreadPID);
         sliderThread.start();
 
-        skystoneDetector = new SkystoneDetector(robot.webcam, telemetry,robot.cameraMonitorViewId);
-        skystoneDetector.init();
-
         PIDController pidRotate = new PIDController(0.025, 0.0001, 0.00001);
 
+        waitForStart();
+
         int[] stoneValues = skystoneDetector.scan();
+
         int valLeft = stoneValues[0];
         int valMid = stoneValues[1];
         int valRight = stoneValues[2];
+
+        telemetry.addData("Nu sunt aici", "asdf");
+        telemetry.update();
 
         if (valLeft == 0 && valMid == 255 && valRight == 255) {  //left stone is a skystone
             FieldStats.REDStones.markAsSkystone(4);
@@ -104,30 +117,31 @@ public class FullStackBlue extends LinearOpMode {
             FieldStats.REDStones.markAsSkystone(6 - 3);
         }
 
-        waitForStart();
-
-        skystoneDetector.killCamera();
+        telemetry.addData("Am ajuns aici", "fads");
+        telemetry.update();
 
         positioningSystem.detach();
-        sliderThreadPID.setTicks(600);
-        goToPositionNoTurning(FieldStats.REDStones.getSkystone(2).x, FieldStats.REDStones.getSkystone(2).y - 5, 0.7, globalPositionUpdate, robot);
+        sliderThreadPID.setTicks(1000);
+        goToPositionNoTurning(FieldStats.REDStones.getSkystone(2).x, FieldStats.REDStones.getSkystone(2).y, 0.7, globalPositionUpdate, robot);
+        sleep(200);
         clawSystem.lowerFlipper();
-        sleep(500);
-        goToPositionNoTurning(FieldStats.REDStones.getSkystone(2).x + 40, FieldStats.REDStones.getSkystone(2).y, 1, globalPositionUpdate, robot);
+        sleep(600);
+        sliderThreadPID.setTicks(600);
+        goToPositionNoTurning(FieldStats.REDStones.getSkystone(2).x + 22, FieldStats.REDStones.getSkystone(2).y, 0.7, globalPositionUpdate, robot);
+        sleep(600);
         positioningSystem.attach();
-        sleep(500);
-        goToPositionNoTurning(FieldStats.REDStones.getSkystone(2).x + 40, 200, 1, globalPositionUpdate, robot);
-        sleep(100);
-        goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x, FieldStats.REDFoundation.DEFAULT_placingPosition.y, 0.8, globalPositionUpdate, robot);
+        goToPositionNoTurning(287, 180, 0.7, globalPositionUpdate, robot);
+        goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x + 5, FieldStats.REDFoundation.DEFAULT_placingPosition.y + 20, 1, globalPositionUpdate, robot);
         clawSystem.attach();
         positioningSystem.detach();
-        sleep(100);
+        sleep(150);
         lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
-        sliderThreadPID.setTicks(1200);
-        goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x - 40, FieldStats.REDFoundation.DEFAULT_placingPosition.y, 0.7, globalPositionUpdate, robot);
-        foundationSystem.attach();
-        clawSystem.detach();
+        sliderThreadPID.setTicks(1700);
         sleep(500);
+        goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x - 35, FieldStats.REDFoundation.DEFAULT_placingPosition.y, 0.7, globalPositionUpdate, robot);
+        foundationSystem.attach();
+        sleep(300);
+
     }
 
     private void resetAngle() {
@@ -203,7 +217,7 @@ public class FullStackBlue extends LinearOpMode {
                 robot.frontRightWheel.setPower(power);
                 robot.backRightWheel.setPower(power);
             } while (opModeIsActive() && !pidRotate.onTarget());
-        } else    // left turn.
+        } else {    // left turn.
             do {
                 power = pidRotate.performPID(getAngle()); // power will be + on left turn.
                 robot.frontLeftWheel.setPower(-power);
@@ -211,6 +225,7 @@ public class FullStackBlue extends LinearOpMode {
                 robot.frontRightWheel.setPower(power);
                 robot.backRightWheel.setPower(power);
             } while (opModeIsActive() && !pidRotate.onTarget());
+        }
 
         // turn the motors off.
         robot.frontLeftWheel.setPower(0);

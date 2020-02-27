@@ -10,6 +10,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraException;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
@@ -52,11 +53,18 @@ public class SkystoneDetector {
     public void init() {
         webcam.openCameraDevice();
         timer.reset();
-        while (timer.seconds() < 2) {}
         webcam.setPipeline(new SkystoneDetector.StageSwitchingPipeline());
-        webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
         telemetry.addData("Init complete","Proceed");
         telemetry.update();
+    }
+
+    public void startStreaming() {
+        try {
+            webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
+        } catch (OpenCvCameraException e) {
+            webcam.openCameraDevice();
+            webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
+        }
     }
 
     public int[] scan() {
@@ -64,13 +72,6 @@ public class SkystoneDetector {
         telemetry.update();
         return new int[]{valLeft,valMid,valRight};
     }
-
-    public void killCamera() {
-        telemetry.addData("Camera","killed");
-        telemetry.update();
-        webcam.stopStreaming();
-    }
-
 
     static class StageSwitchingPipeline extends OpenCvPipeline
     {
