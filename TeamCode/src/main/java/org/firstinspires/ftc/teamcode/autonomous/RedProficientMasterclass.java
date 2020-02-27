@@ -29,15 +29,15 @@ import static java.lang.Math.toRadians;
 import static org.firstinspires.ftc.teamcode.utilities.Utilities.AngleWrap;
 
 /**
- * Autonomous Program that completes all tasks in a time record
+ * Autonomous Program that completes all tasks in a record time
  * Masterclass Copyright on Francisc Czobor - mentor of RO017 TITANS
  *             - term origin: an expensive-as-fuck Web Dev Course that basically teaches you nothing
  *             - couldn't be more suggestive
  * Red.
  */
 
-@Autonomous(name = "Proficient Masterclass Red", group = "Autonomous")
-public class ProficientMasterclassRed extends LinearOpMode {
+@Autonomous(name = "Red Proficient Masterclass", group = "Autonomous")
+public class RedProficientMasterclass extends LinearOpMode {
 
     private Hardware robot = new Hardware();
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
