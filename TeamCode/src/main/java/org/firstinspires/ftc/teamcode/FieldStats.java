@@ -14,7 +14,7 @@ public class FieldStats {
     }
 
     public static class REDFoundation {
-        public static Point DEFAULT_placingPosition = new Point(260,305.0);
+        public static Point DEFAULT_placingPosition = new Point(240,305.0);
         public static Point AFTER_AUTO_placingPosition = new Point(292.02,288.3);
     }
 
