@@ -26,7 +26,7 @@ public class TeleOp2 extends Robot {
 
         robot.init(hardwareMap);
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal,robot.ExpansionHub1, Utilities.TICKS_PER_INCH, 75);
 
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();

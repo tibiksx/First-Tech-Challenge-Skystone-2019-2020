@@ -20,6 +20,14 @@ public class Utilities {
         STANDARD
     }
 
+    public enum CAMERA_STATE {
+        NULL,
+        INIT,
+        STREAM,
+        DETECT,
+        KILL
+    }
+
     public final static double TICKS_PER_INCH = 259.84481;
     public final static double TICKS_PER_CM = 101.85916;
     public final static double TICKS_PER_REV = 1600;

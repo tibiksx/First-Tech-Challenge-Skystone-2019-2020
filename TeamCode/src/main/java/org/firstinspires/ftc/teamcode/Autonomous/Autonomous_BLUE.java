@@ -38,8 +38,10 @@ public class Autonomous_BLUE extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         robot.init(hardwareMap);
+        robot.initIMU();
+        robot.initWebcam();
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal,robot.ExpansionHub1, Utilities.TICKS_PER_INCH, 75);
         globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, Math.toRadians(initialOrientationDegrees));
         globalPositionUpdate.reverseRightEncoder();
         Thread positionThread = new Thread(globalPositionUpdate);

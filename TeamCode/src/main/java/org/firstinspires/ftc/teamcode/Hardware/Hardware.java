@@ -11,8 +11,10 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.ComputerVision.SkystoneDetector;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.ExpansionHubServo;
+import org.openftc.revextensions2.RevBulkData;
 
 public class Hardware {
 
@@ -49,6 +51,14 @@ public class Hardware {
     //---------CAMERA-----------------------------
     public OpenCvCamera webcam;
     public int cameraMonitorViewId;
+
+    //----------Expansion Hubs-----------------
+    public ExpansionHubEx ExpansionHub1;
+    public ExpansionHubEx ExpansionHub2;
+
+    //------------Bulk Data---------------------
+    public RevBulkData ExpansionHub1BulkData;
+    public RevBulkData ExpansionHub2BulkData;
 
     private HardwareMap hwMap = null;
 
@@ -140,9 +150,9 @@ public class Hardware {
         foundationLeft = hwMap.get(ExpansionHubServo.class,"foundLeft");
         foundationRight = hwMap.get(ExpansionHubServo.class,"foundRight");
 
-        //---------------------CAMERA----------------------------------
-        cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hwMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        //----------------------Expansion Hubs------------------------
+        ExpansionHub1 = hwMap.get(ExpansionHubEx.class,"Expansion Hub 1");
+        ExpansionHub2 = hwMap.get(ExpansionHubEx.class,"Expansion Hub 2");
     }
 
     public void initIMU() {
@@ -155,6 +165,11 @@ public class Hardware {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
+    }
+
+    public void initWebcam() {
+        cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hwMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
     }
 
 

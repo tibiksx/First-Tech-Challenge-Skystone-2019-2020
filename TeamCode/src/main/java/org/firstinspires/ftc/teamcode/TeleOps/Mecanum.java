@@ -5,22 +5,16 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Misc.*;
-import org.firstinspires.ftc.teamcode.Odometry.OdometryGlobalCoordinatePosition;
 import org.firstinspires.ftc.teamcode.Threads.LifterThread;
 import org.firstinspires.ftc.teamcode.Threads.SliderThreadPID;
 import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-
-import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.teamcode.Misc.LifterMethods.level;
 
 @TeleOp(name = "Main TeleOp", group = "Pushbot")
 public class Mecanum extends Robot {
 
-    private Telemetry.Item odometryTelemetry = null;
     private Telemetry.Item powerCoeffTelemetry = null;
     private Telemetry.Item armTelemetry = null;
 
@@ -29,14 +23,12 @@ public class Mecanum extends Robot {
 
     private double powerCoeff = 1;
 
-    private OdometryGlobalCoordinatePosition globalPositionUpdate;
-
     private LifterThread lifterThread = null;
     public LifterMethods.LIFTER currentState;
     private int levelIndex;
 
     private SliderThreadPID sliderThreadPID;
-    private int[] sliderStates = {200,1200};
+    private int[] sliderStates = {200,1000};
     private int sliderIndex = -1;
 
     private boolean oldLeftBumper;
@@ -44,12 +36,11 @@ public class Mecanum extends Robot {
     private boolean newLeftBumper;
     private boolean newRightBumper;
 
+    private int oldSliderPower;
+    private int newSliderPower;
+
     private boolean newButtonState = false;
     private boolean oldButtonState = false;
-
-    private final double initialXCoordinate = 0;
-    private final double initialYCoordinate = 0;
-    private final double initialOrientationDegrees = 0;
 
     private PositioningSystem positioningSystem;
     private ClawSystem clawSystem;
@@ -58,24 +49,16 @@ public class Mecanum extends Robot {
     private boolean startButton1 = false;
     private boolean startButton2 = false;
 
-    private ExpansionHubEx expansionHub;
-
     @Override
     public void init() {
         super.init();
 
+        robot.ExpansionHub2.setPhoneChargeEnabled(true);
+
         telemetry.setAutoClear(false);
-        odometryTelemetry = telemetry.addData("Odometry - ", "");
         powerCoeffTelemetry = telemetry.addData("Power Coeff: ", 1);
         armTelemetry = telemetry.addData("Arm - ", "Lifter:  " + 0 + "  Extension:  " + 0);
         telemetry.update();
-
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight
-                , robot.horizontal, Utilities.TICKS_PER_INCH, 75);
-        globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, Math.toRadians(initialOrientationDegrees));
-        globalPositionUpdate.reverseRightEncoder();
-        Thread positionThread = new Thread(globalPositionUpdate);
-        positionThread.start();
 
 
         lifterThread = new LifterThread(robot.leftLifter, robot.rightLifter);
@@ -87,6 +70,8 @@ public class Mecanum extends Robot {
         sliderThreadPID = new SliderThreadPID(robot.slider);
         Thread sliderThread = new Thread(sliderThreadPID);
         sliderThread.start();
+        oldSliderPower = 0;
+        newSliderPower = 0;
 
         clawSystem = new ClawSystem(robot.claw, robot.flipper);
         clawSystem.Initial();
@@ -103,6 +88,23 @@ public class Mecanum extends Robot {
     @Override
     public void loop() {
         super.loop();
+
+        //Placed this here so that it is the first thing executed
+        newButtonState = robot.button.isPressed();
+        if (newButtonState && !oldButtonState) {    //raising edge of the signal
+            //kill the motors running in thread
+            LifterThread.finished = true;
+            robot.leftLifter.setPower(0);
+            robot.rightLifter.setPower(0);
+            robot.leftLifter.setMode(ExpansionHubMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
+            currentState = LifterMethods.LIFTER.LOW;
+        }
+        oldButtonState = newButtonState;
+
+        //Second in importance
+        robot.ExpansionHub1BulkData = robot.ExpansionHub1.getBulkInputData();
+        robot.ExpansionHub2BulkData = robot.ExpansionHub2.getBulkInputData();
 
         if (controllerInputA.leftBumperOnce() && powerCoeff > 0.2) {
             powerCoeff -= 0.1;
@@ -133,30 +135,27 @@ public class Mecanum extends Robot {
         newLeftBumper = gamepad2.left_bumper;
         newRightBumper = gamepad2.right_bumper;
         if ((newLeftBumper != oldLeftBumper) || (newRightBumper != oldRightBumper)) {
-            if (!newLeftBumper && !newRightBumper)
-                robot.slider.setPower(0);
-            else if (newLeftBumper && !newRightBumper)
-                robot.slider.setPower(-1);
-            else if (!newLeftBumper)
-                robot.slider.setPower(1);
+            if ((!newLeftBumper && !newRightBumper))
+                newSliderPower = 0;
+
+            //move the slider forward
+            if(!newLeftBumper && newRightBumper)
+                newSliderPower = 1;
+
+            //only move the slider backwards if we are more than 15 ticks
+            if(newLeftBumper && !newRightBumper && robot.ExpansionHub1BulkData.getMotorCurrentPosition(robot.slider) >=20)
+                newSliderPower = -1;
         }
+
+        if(newSliderPower != oldSliderPower) {
+            robot.slider.setPower(newSliderPower);
+        }
+        oldSliderPower = newSliderPower;
         oldLeftBumper = newLeftBumper;
         oldRightBumper = newRightBumper;
 
 
         //--------------------LIFTER------------------------------------
-
-        newButtonState = robot.button.isPressed();
-        if (newButtonState && !oldButtonState) {    //raising edge of the signal
-            //kill the motors running in thread
-            LifterThread.finished = true;
-            robot.leftLifter.setPower(0);
-            robot.rightLifter.setPower(0);
-            robot.leftLifter.setMode(ExpansionHubMotor.RunMode.STOP_AND_RESET_ENCODER);
-            robot.leftLifter.setMode(ExpansionHubMotor.RunMode.RUN_USING_ENCODER);
-            currentState = LifterMethods.LIFTER.LOW;
-        }
-        oldButtonState = newButtonState;
 
         lifterNewPower = gamepad2.right_stick_y;
         if (lifterNewPower != lifterOldPower && LifterThread.finished) {
@@ -176,7 +175,7 @@ public class Mecanum extends Robot {
             lifterThread.setTicks(LifterMethods.getTicksFromState(level[levelIndex]));
             currentState = level[levelIndex];
         }
-        currentState = LifterMethods.getStateFromTicks(robot.leftLifter.getCurrentPosition());
+        currentState = LifterMethods.getStateFromTicks(robot.ExpansionHub2BulkData.getMotorCurrentPosition(robot.leftLifter));
 
         //-------------------SERVO CONTROL-----------------------------
         startButton2 = gamepad2.start;
@@ -185,7 +184,6 @@ public class Mecanum extends Robot {
         if (controllerInputA.BOnce() && !startButton1) { //  deal with the claw
             if (!clawSystem.isAttached()) {
                 clawSystem.Attach(); //when attaching claw, wait a little then detach the positioning system
-                sleep(50);
                 positioningSystem.Detach();
             } else clawSystem.Detach();
         }
@@ -201,14 +199,9 @@ public class Mecanum extends Robot {
         if(controllerInputB.BOnce() && !startButton2) {
             if(sliderIndex == -1)
                 sliderIndex = 1;
-            sliderThreadPID.setTicks(sliderStates[sliderIndex++ % 2]);
+            sliderThreadPID.setTicks(sliderStates[sliderIndex++ % sliderStates.length]);
         }
 
-        if (controllerInputB.YOnce() && !startButton2) { //deal with the flipper
-            if (clawSystem.isLowered())
-                clawSystem.raiseFlipper();
-            else clawSystem.lowerFlipper();
-        }
 
         if (controllerInputA.AOnce() && !startButton1 && !positioningSystem.isAttached()) { //deal with the foundation system
             if (foundationSystem.isAttached())
@@ -216,43 +209,24 @@ public class Mecanum extends Robot {
             else foundationSystem.Attach();
         }
 
-//
         updateTelemetry();
+    }
 
+    @Override
+    public void stop() {
+        super.stop();
+        LifterThread.finished = true; //stop the loop
+        LifterThread.kill = true; //stop the entire thread
+        robot.leftLifter.setPower(0);
+        robot.rightLifter.setPower(0);
     }
 
     private void updateTelemetry() {
-        NumberFormat formatter = new DecimalFormat("#0.000");
-        odometryTelemetry.setValue("X: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition))
-                + "  Y: " + formatter.format(Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition)) + "  Angle: "
-                + formatter.format(globalPositionUpdate.robotOrientationDeg) + "  Alive: "
-                + globalPositionUpdate.isRunning);
         powerCoeffTelemetry.setValue(powerCoeff);
-        armTelemetry.setValue("Lifter:  " + robot.leftLifter.getCurrentPosition() + "  Next level:  " + levelIndex
-                + "  Button: " + robot.button.isPressed() + " Slider  " + robot.slider.getCurrentPosition());
+        armTelemetry.setValue("Lifter:  " + robot.ExpansionHub2BulkData.getMotorCurrentPosition(robot.leftLifter) + "  Next level:  " + levelIndex
+                 + " Slider  " + robot.ExpansionHub1BulkData.getMotorCurrentPosition(robot.slider));
         telemetry.update();
     }
 
-
-    private void moveSliderPID(int position) {
-        robot.slider.setTargetPosition(position);
-        robot.slider.setTargetPositionTolerance(50);
-        robot.slider.setMode(ExpansionHubMotor.RunMode.RUN_TO_POSITION);
-        if (robot.slider.getCurrentPosition() < position) {
-            robot.slider.setPower(1);
-            while (robot.slider.getCurrentPosition() < position - 100) {
-                telemetry.addData("POZ", robot.slider.getPower() + " " + robot.slider.getCurrentPosition());
-                telemetry.update();
-            }
-        } else {
-            robot.slider.setPower(-1);
-            while (robot.slider.getCurrentPosition() > position + 100) {
-                telemetry.addData("POZ", robot.slider.getPower() + " " + robot.slider.getCurrentPosition());
-                telemetry.update();
-            }
-        }
-        robot.slider.setPower(0);
-        sleep(50);
-    }
 
 }

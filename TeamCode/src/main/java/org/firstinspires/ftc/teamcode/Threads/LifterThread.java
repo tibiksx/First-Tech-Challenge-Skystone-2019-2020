@@ -17,12 +17,14 @@ public class LifterThread implements Runnable {
 
     public static volatile boolean finished = true;
 
-    public ExpansionHubMotor leftLifter;
-    public ExpansionHubMotor rightLifter;
+    private ExpansionHubMotor leftLifter;
+    private ExpansionHubMotor rightLifter;
 
     public LifterThread(ExpansionHubMotor leftLifter, ExpansionHubMotor rightLifter) {
         this.leftLifter = leftLifter;
         this.rightLifter = rightLifter;
+        finished = true;
+        kill = false;
     }
 
     @Override

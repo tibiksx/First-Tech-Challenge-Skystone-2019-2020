@@ -22,7 +22,7 @@ public class OdometryTest extends Robot {
     public void init() {
         super.init();
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 75);
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal,robot.ExpansionHub1, Utilities.TICKS_PER_INCH, 75);
         globalPositionUpdate.reverseRightEncoder();
 
         Thread positionThread = new Thread(globalPositionUpdate);

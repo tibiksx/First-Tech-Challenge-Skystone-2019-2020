@@ -19,6 +19,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class SkystoneDetector {
 
 
@@ -53,6 +54,7 @@ public class SkystoneDetector {
 
     public void init() {
         webcam.openCameraDevice();
+
         webcam.setPipeline(new StageSwitchingPipeline());
         telemetry.addData("Camera Opened", "");
         telemetry.update();
@@ -67,7 +69,7 @@ public class SkystoneDetector {
             webcam.openCameraDevice();
             webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
         }
-
+        webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
     }
 
     public int[] scan() {
@@ -77,9 +79,10 @@ public class SkystoneDetector {
     }
 
     public void killCamera() {
+        webcam.stopStreaming();
+        webcam.closeCameraDevice();
         telemetry.addData("Camera", "killed");
         telemetry.update();
-        webcam.stopStreaming();
     }
 
 
@@ -89,7 +92,7 @@ public class SkystoneDetector {
         Mat all = new Mat();
         List<MatOfPoint> contoursList = new ArrayList<>();
 
-        enum Stage {//color difference. greyscale
+        enum Stage {//color difference. grayscale
             detection,//includes outlines
             THRESHOLD,//b&w
             RAW_IMAGE,//displays raw view

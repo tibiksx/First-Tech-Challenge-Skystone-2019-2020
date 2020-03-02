@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.ComputerVision.CameraThread;
 import org.firstinspires.ftc.teamcode.ComputerVision.SkystoneDetector;
 import org.firstinspires.ftc.teamcode.FieldStats;
 import org.firstinspires.ftc.teamcode.Hardware.Hardware;
@@ -34,12 +35,14 @@ public class Autonomous_RED extends LinearOpMode {
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
 
     private LifterThread lifterThread = null;
+    private CameraThread cameraThread = null;
+    private SliderThreadPID sliderThreadPID;
 
     private ClawSystem clawSystem = null;
     private PositioningSystem positioningSystem = null;
     private FoundationSystem foundationSystem = null;
 
-    private SkystoneDetector skystoneDetector;
+//    private SkystoneDetector skystoneDetector;
 
     private final double initialXCoordinate = Utilities.CM_TO_TICKS(336);
     private final double initialYCoordinate = Utilities.CM_TO_TICKS(98);
@@ -55,11 +58,20 @@ public class Autonomous_RED extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         robot.init(hardwareMap);
         robot.initIMU();
+        robot.initWebcam();
 
-        skystoneDetector = new SkystoneDetector(robot.webcam, telemetry, robot.cameraMonitorViewId);
-        skystoneDetector.init();
+//        skystoneDetector = new SkystoneDetector(robot.webcam, telemetry, robot.cameraMonitorViewId);
+//        skystoneDetector.init();
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 50);
+        cameraThread = new CameraThread(robot.webcam);
+        Thread cameraRunner = new Thread(cameraThread);
+        cameraRunner.start();
+
+        cameraThread.setState(Utilities.CAMERA_STATE.INIT);
+        sleep(2000);
+        cameraThread.setState(Utilities.CAMERA_STATE.STREAM);
+
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal,robot.ExpansionHub1, Utilities.TICKS_PER_INCH, 50);
         globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, toRadians(initialOrientationDegrees));
         globalPositionUpdate.reverseRightEncoder();
         Thread positionThread = new Thread(globalPositionUpdate);
@@ -80,7 +92,7 @@ public class Autonomous_RED extends LinearOpMode {
         Thread lifterRunner = new Thread(lifterThread);
         lifterRunner.start();
 
-        SliderThreadPID sliderThreadPID = new SliderThreadPID(robot.slider);
+        sliderThreadPID = new SliderThreadPID(robot.slider);
         Thread sliderThread = new Thread(sliderThreadPID);
         sliderThread.start();
 
@@ -88,28 +100,22 @@ public class Autonomous_RED extends LinearOpMode {
         //PIDController pidRotate = new PIDController(0.025, 0.0001, 0.00001);
         powerPID = new PIDController(0, 0, 0);
 
-        skystoneDetector.startStreaming();
+        if (!CameraThread.isAlive()) {
+            cameraRunner = new Thread(cameraThread);
+            cameraRunner.start();
+
+            cameraThread.setState(Utilities.CAMERA_STATE.INIT);
+            sleep(1000);
+            cameraThread.setState(Utilities.CAMERA_STATE.STREAM);
+        }
+
 
         waitForStart();
 
-        int[] stoneValues = skystoneDetector.scan();
-        int valLeft = stoneValues[0];
-        int valMid = stoneValues[1];
-        int valRight = stoneValues[2];
-        skystoneDetector.killCamera();
-
-        if (valLeft == 0 && valMid == 255 && valRight == 255) {  //left stone is a skystone
-            FieldStats.REDStones.markAsSkystone(4);
-            FieldStats.REDStones.markAsSkystone(4 - 3);
-        } else if (valLeft == 255 && valMid == 0 && valRight == 255) { //mid stone is a skystone
-            FieldStats.REDStones.markAsSkystone(5);
-            FieldStats.REDStones.markAsSkystone(5 - 3);
-        } else if (valLeft == 255 && valMid == 255 && valRight == 0) {  //right stone is a skystone
-            FieldStats.REDStones.markAsSkystone(6);
-            FieldStats.REDStones.markAsSkystone(6 - 3);
-        }
-        telemetry.log().clear();
-        FieldStats.REDStones.displayPattern(telemetry);
+        cameraThread.setState(Utilities.CAMERA_STATE.DETECT);
+        sleep(100);
+        cameraThread.setState(Utilities.CAMERA_STATE.KILL);
+        cameraRunner.join();
 
         //find the closest stone to pick up
         FieldStats.Stone closestStone1 = new FieldStats.Stone(new Point(-1, -1), false);
@@ -124,26 +130,14 @@ public class Autonomous_RED extends LinearOpMode {
         if (closestStone1.getPosition().x != -1) {
             positioningSystem.Detach();
             sliderThreadPID.setTicks(1000);
-            goToPositionNoTurning(closestStone1.getPosition().x, closestStone1.getPosition().y, 0.7, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.HIGH);
+            goToPositionNoTurning(closestStone1.getPosition().x, closestStone1.getPosition().y, 1, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.HIGH);
             clawSystem.lowerFlipper();
             sleep(600);
             sliderThreadPID.setTicks(600);
-            goToPositionNoTurning(closestStone1.getPosition().x + 22, closestStone1.getPosition().y, 0.7, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.LOW);
-            positioningSystem.Attach();
-            goToPositionNoTurning(287, 180, 0.7, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.MEDIUM);
-//            goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x + 5, FieldStats.REDFoundation.DEFAULT_placingPosition.y + 20, 1, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.MEDIUM);
-//            clawSystem.Attach();
-//            positioningSystem.Detach();
-//            sleep(150);
-//            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
-//            sliderThreadPID.setTicks(1700);
-//            sleep(500);
-//            goToPositionNoTurning(FieldStats.REDFoundation.DEFAULT_placingPosition.x - 35, FieldStats.REDFoundation.DEFAULT_placingPosition.y, 0.7, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.HIGH);
-//            foundationSystem.Attach();
-//            sleep(300);
+
 
         } else {  //if we did not find a stone for some reason just park for now
-            goToPositionNoTurning(285, 180, 0.7, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.MEDIUM);
+            goToPositionNoTurning(285, 180, 1, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.MEDIUM);
         }
     }
 
@@ -244,10 +238,6 @@ public class Autonomous_RED extends LinearOpMode {
         resetAngle();
     }
 
-    private double iccKinematics(double radius) {
-        return (radius - 20) / (radius + 20);
-    }
-
     private double getZAngle() {
         return (-robot.imu.getAngularOrientation().firstAngle);
     }
@@ -263,9 +253,11 @@ public class Autonomous_RED extends LinearOpMode {
         //PID controller that outputs a fraction of the power to apply to the motors
         //based on the distance to the target
 
-        double p = Math.abs(moveSpeed/initialDistance) + 0.005;
-        double i = p / 100.0;
-        powerPID.setPID(p, i, 0);
+//        double p = Math.abs(moveSpeed/initialDistance);
+//        double i = p / 100.0;
+//        powerPID.setPID(p, i, 0);
+
+        powerPID.setPID(0.05,0.001,0);
 
         powerPID.setSetpoint(initialDistance);
         powerPID.setInputRange(0, initialDistance);
@@ -293,12 +285,11 @@ public class Autonomous_RED extends LinearOpMode {
 
 
             double powerFraction = powerPID.performPID(initialDistance - distanceToTarget);
-            if (powerFraction <= 0.25) {
+            if (powerFraction <= 0.30) {
                 robot.frontLeftWheel.setPower(0);
                 robot.frontRightWheel.setPower(0);
                 robot.backLeftWheel.setPower(0);
                 robot.backRightWheel.setPower(0);
-                powerPID.reset();
                 break;
             }
 

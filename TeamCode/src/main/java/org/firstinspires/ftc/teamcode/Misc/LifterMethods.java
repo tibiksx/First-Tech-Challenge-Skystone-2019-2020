@@ -89,21 +89,21 @@ public class LifterMethods {
             case LOW:
                 return 0;
             case FIRST:
-                return 800;
+                return 760;
             case SECOND:
-                return 1400;
+                return 1500;
             case THIRD:
-                return 2200;
+                return 2500;
             case FOURTH:
-                return 3100;
+                return 3200;
             case FIFTH:
-                return 3950;
+                return 4000;
             case SIXTH:
                 return 4600;
             case SEVENTH:
-                return 5600;
+                return 5700;
             case EIGHTH:
-                return 6100;
+                return 5990;
         }
         return 0; //code should never reach here. Yes, this function sucks...
     }

@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.Odometry;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.RevBulkData;
 
 import java.io.File;
 
@@ -14,6 +16,8 @@ import java.io.File;
 public class OdometryGlobalCoordinatePosition implements Runnable{
 
     private ExpansionHubMotor verticalEncoderLeft, verticalEncoderRight, horizontalEncoder;
+    private RevBulkData bulkData;
+    private ExpansionHubEx expansionHub;
 
     public boolean isRunning = true;
 
@@ -40,14 +44,14 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
      * @param horizontalEncoder horizontal odometry encoder, perpendicular to the other two odometry encoder wheels
      * @param threadSleepDelay delay in milliseconds for the GlobalPositionUpdate thread (50-75 milliseconds is suggested)
      */
-    public OdometryGlobalCoordinatePosition(ExpansionHubMotor verticalEncoderLeft, ExpansionHubMotor verticalEncoderRight, ExpansionHubMotor horizontalEncoder, double COUNTS_PER_INCH, int threadSleepDelay){
+    public OdometryGlobalCoordinatePosition(ExpansionHubMotor verticalEncoderLeft, ExpansionHubMotor verticalEncoderRight, ExpansionHubMotor horizontalEncoder, ExpansionHubEx expansionHub, double COUNTS_PER_INCH, int threadSleepDelay){
         this.verticalEncoderLeft = verticalEncoderLeft;
         this.verticalEncoderRight = verticalEncoderRight;
         this.horizontalEncoder = horizontalEncoder;
+        this.expansionHub = expansionHub;
         sleepTime = threadSleepDelay;
 
         robotEncoderWheelDistance = Double.parseDouble(ReadWriteFile.readFile(wheelBaseSeparationFile).trim()) * COUNTS_PER_INCH;
-//        robotEncoderWheelDistance = 6.5 * COUNTS_PER_INCH;
         this.horizontalEncoderTickPerDegreeOffset = Double.parseDouble(ReadWriteFile.readFile(horizontalTickOffsetFile).trim());
 
     }
@@ -56,21 +60,24 @@ public class OdometryGlobalCoordinatePosition implements Runnable{
      * Updates the global (x, y, theta) coordinate position of the robot using the odometry encoders
      */
     public void globalCoordinatePositionUpdate(){
+
+        bulkData = expansionHub.getBulkInputData();
+
+
         //Get Current Positions
-        verticalLeftEncoderWheelPosition = (verticalEncoderLeft.getCurrentPosition() * verticalLeftEncoderPositionMultiplier);
-        verticalRightEncoderWheelPosition = (verticalEncoderRight.getCurrentPosition() * verticalRightEncoderPositionMultiplier);
+        verticalLeftEncoderWheelPosition = (bulkData.getMotorCurrentPosition(verticalEncoderLeft) * verticalLeftEncoderPositionMultiplier);
+        verticalRightEncoderWheelPosition = (bulkData.getMotorCurrentPosition(verticalEncoderRight)* verticalRightEncoderPositionMultiplier);
 
         double leftChange = verticalLeftEncoderWheelPosition - previousVerticalLeftEncoderWheelPosition;
         double rightChange = verticalRightEncoderWheelPosition - previousVerticalRightEncoderWheelPosition;
 
         //Calculate Angle
         changeInRobotOrientation = (leftChange - rightChange) / (robotEncoderWheelDistance);
-        robotOrientationRadians = ((robotOrientationRadians + changeInRobotOrientation));
-        robotOrientationRadians %= (2*Math.PI);
+        robotOrientationRadians = ((robotOrientationRadians + changeInRobotOrientation)) % ( 2 * Math.PI);
         robotOrientationDeg = Math.toDegrees(robotOrientationRadians) % 360;
 
         //Get the components of the motion
-        normalEncoderWheelPosition = (horizontalEncoder.getCurrentPosition()*normalEncoderPositionMultiplier);
+        normalEncoderWheelPosition = bulkData.getMotorCurrentPosition(horizontalEncoder)*normalEncoderPositionMultiplier;
         double rawHorizontalChange = normalEncoderWheelPosition - prevNormalEncoderWheelPosition;
         double horizontalChange = rawHorizontalChange - (changeInRobotOrientation*horizontalEncoderTickPerDegreeOffset);
 
