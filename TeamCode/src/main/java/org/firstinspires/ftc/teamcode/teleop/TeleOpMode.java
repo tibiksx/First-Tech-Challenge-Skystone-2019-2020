@@ -32,6 +32,8 @@ public class TeleOpMode extends Base {
     private double lifterOldPower = 0;
     private double lifterNewPower = 0;
 
+    private double sliderPower = 0;
+
     private double powerCoeff = 1;
 
     private OdometryGlobalCoordinatePosition globalPositionUpdate;
@@ -138,6 +140,9 @@ public class TeleOpMode extends Base {
         newLeftBumper = gamepad2.left_bumper;
         newRightBumper = gamepad2.right_bumper;
         if ((newLeftBumper != oldLeftBumper) || (newRightBumper != oldRightBumper)) {
+            if (robot.slider.getCurrentPosition() < 40) {
+                newLeftBumper = false;
+            }
             if (!newLeftBumper && !newRightBumper)
                 robot.slider.setPower(0);
             else if (newLeftBumper && !newRightBumper)
@@ -203,7 +208,7 @@ public class TeleOpMode extends Base {
             else positioningSystem.attach();
         }
 
-        if(controllerInputB.BOnce() && !startButton2) {
+        if(controllerInputB.BOnce() && !startButton2 && !newLeftBumper && !newRightBumper) {
             if(sliderIndex == -1)
                 sliderIndex = 1;
             sliderThreadPID.setTicks(sliderStates[sliderIndex++ % 2]);
@@ -221,9 +226,14 @@ public class TeleOpMode extends Base {
             else foundationSystem.attach();
         }
 
-//
         updateTelemetry();
+    }
 
+    @Override
+    public void stop() {
+        LifterThread.kill = true;
+        SliderThreadPID.kill = true;
+        super.stop();
     }
 
     private void updateTelemetry() {
@@ -233,8 +243,7 @@ public class TeleOpMode extends Base {
                 + formatter.format(globalPositionUpdate.robotOrientationDeg) + "  Alive: "
                 + globalPositionUpdate.isRunning);
         powerCoeffTelemetry.setValue(powerCoeff);
-        armTelemetry.setValue("Lifter:  " + robot.leftLifter.getCurrentPosition() + "  Next level:  " + levelIndex
-                + "  Button: " + robot.button.isPressed() + " Slider  " + robot.slider.getCurrentPosition());
+        armTelemetry.setValue("  Thread: " + SliderThreadPID.finished + " Slider  " + robot.slider.getCurrentPosition());
         telemetry.update();
     }
 

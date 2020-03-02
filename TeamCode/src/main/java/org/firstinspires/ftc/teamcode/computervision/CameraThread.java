@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.computervision;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.utilities.FieldStats;
+import org.firstinspires.ftc.teamcode.utilities.Utilities;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -11,61 +12,117 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraException;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
+import org.openftc.opencvrepackaged.OpenCvNativeLibCorruptedException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SkystoneDetector {
+public class CameraThread implements Runnable {
+
+    private OpenCvCamera camera;
+    private volatile Utilities.CAMERA_STATE state = Utilities.CAMERA_STATE.NULL;
+    private boolean active;
+    private static volatile boolean kill = false;
+
+    ///////////////////////////////////////////////
 
     private static int valMid = -1;
     private static int valLeft = -1;
     private static int valRight = -1;
 
-    private static float rectHeight = .6f/8f;
-    private static float rectWidth = 1.5f/8f;
+    private static final float rectHeight = .6f/8f;
+    private static final float rectWidth = 1.5f/8f;
 
-    private static float offsetX = 0f/8f;//changing this moves the three rects and the three circles left or right, range : (-2, 2) not inclusive
-    private static float offsetY = 0f/8f;//changing this moves the three rects and circles up or down, range: (-4, 4) not inclusive
+    private static float offsetX = 0f/8f;
+    private static float offsetY = 0f/8f;
 
-    private static float[] midPos = {4f/8f+offsetX, 4f/8f+offsetY};//0 = col, 1 = row
+    private static float[] midPos = {4f/8f+offsetX, 4f/8f+offsetY};
     private static float[] leftPos = {2f/8f+offsetX, 4f/8f+offsetY};
     private static float[] rightPos = {6f/8f+offsetX, 4f/8f+offsetY};
 
-    public OpenCvCamera webcam;
+    private static final int rows = 640;
+    private static final int cols = 480;
 
-    private Telemetry telemetry;
+    //////////////////////////////////////////////
 
-    private int cameraMonitorViewId;
-
-    private final int rows = 640;
-    private final int cols = 480;
-
-    public SkystoneDetector(OpenCvCamera webcam, Telemetry telemetry, int cameraMonitorViewId) {
-        this.cameraMonitorViewId = cameraMonitorViewId;
-        this.webcam = webcam;
-        this.telemetry = telemetry;
+    public CameraThread(OpenCvCamera camera) {
+        this.camera = camera;
     }
 
-    public void init() {
-        webcam.openCameraDevice();
-        webcam.setPipeline(new SkystoneDetector.StageSwitchingPipeline());
-    }
+    @Override
+    public void run() {
 
-    public void startStreaming() {
-        try {
-            webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
-        } catch (OpenCvCameraException e) {
-            webcam.openCameraDevice();
-            webcam.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
+        while (!kill) {
+
+            if (active) {
+                if (state == Utilities.CAMERA_STATE.INIT) {
+                    try {
+                        camera.openCameraDevice();
+                    } catch (OpenCvCameraException e) {
+                        try {
+                            Thread.sleep(1500);
+                        } catch (InterruptedException i) {
+                            killThread();
+                        }
+                    }
+                    try {
+                        camera.setPipeline(new StageSwitchingPipeline());
+                    } catch (OpenCvNativeLibCorruptedException n) {
+                        try {
+                            Thread.sleep(1500);
+                        } catch (InterruptedException i) {
+                            killThread();
+                        }
+                    }
+                }
+
+                if (state == Utilities.CAMERA_STATE.STREAM) {
+                    try {
+                        camera.startStreaming(rows, cols, OpenCvCameraRotation.UPRIGHT);
+                    } catch (OpenCvNativeLibCorruptedException c) {
+                        try {
+                            Thread.sleep(1500);
+                        } catch (InterruptedException i) {
+                            killThread();
+                        }
+                    }
+                }
+
+                if (state == Utilities.CAMERA_STATE.DETECT) {
+
+                    if (valLeft == 0 && valMid == 255 && valRight == 255) {  //left stone is a skystone
+                        FieldStats.REDStones.markAsSkystone(4);
+                        FieldStats.REDStones.markAsSkystone(4 - 3);
+                    } else if (valLeft == 255 && valMid == 0 && valRight == 255) { //mid stone is a skystone
+                        FieldStats.REDStones.markAsSkystone(5);
+                        FieldStats.REDStones.markAsSkystone(5 - 3);
+                    } else if (valLeft == 255 && valMid == 255 && valRight == 0) {  //right stone is a skystone
+                        FieldStats.REDStones.markAsSkystone(6);
+                        FieldStats.REDStones.markAsSkystone(6 - 3);
+                    }
+                }
+
+                if (state == Utilities.CAMERA_STATE.KILL) {
+                    killThread();
+                }
+
+                active = false;
+            }
         }
+
     }
 
-    public int[] scan() {
-        return new int[]{valLeft,valMid,valRight};
+    private static void killThread() {
+        kill = true;
     }
 
-    public void killCamera() {
-        webcam.closeCameraDevice();
+    public static boolean isHealthy() {
+        return kill;
+    }
+
+    public void setState(Utilities.CAMERA_STATE state) {
+        this.state = state;
+        this.active = true;
     }
 
     static class StageSwitchingPipeline extends OpenCvPipeline {
@@ -80,8 +137,8 @@ public class SkystoneDetector {
             RAW_IMAGE,//displays raw view
         }
 
-        private StageSwitchingPipeline.Stage stageToRenderToViewport = StageSwitchingPipeline.Stage.detection;
-        private StageSwitchingPipeline.Stage[] stages = StageSwitchingPipeline.Stage.values();
+        private SkystoneDetector.StageSwitchingPipeline.Stage stageToRenderToViewport = SkystoneDetector.StageSwitchingPipeline.Stage.detection;
+        private SkystoneDetector.StageSwitchingPipeline.Stage[] stages = SkystoneDetector.StageSwitchingPipeline.Stage.values();
 
         @Override
         public void onViewportTapped() {

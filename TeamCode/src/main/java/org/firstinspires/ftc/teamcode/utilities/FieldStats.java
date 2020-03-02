@@ -14,7 +14,7 @@ public class FieldStats {
     }
 
     public static class REDFoundation {
-        public static Point DEFAULT_placingPosition = new Point(260,296.0);
+        public static Point DEFAULT_placingPosition = new Point(260.3,306.3);
         public static Point AFTER_AUTO_placingPosition = new Point(292.02,288.3);
     }
 
@@ -25,15 +25,15 @@ public class FieldStats {
 
 
     public static class REDStones {
-        public static Stone nullStone = new Stone(new Point(0,0),false);
-        public static Stone firstStone = new Stone(new Point(231.24+30,10.16),false);
-        public static Stone secondStone = new Stone(new Point(231.24+30,10.16 + 20.32),false);
-        public static Stone thirdStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32),false);
-        public static Stone fourthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32),false);
-        public static Stone fifthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
-        public static Stone sixthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        private static Stone nullStone = new Stone(new Point(0,0),false);
+        private static Stone firstStone = new Stone(new Point(260.3,10.16),false);
+        private static Stone secondStone = new Stone(new Point(260.3,10.16 + 20.32),false);
+        private static Stone thirdStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32),false);
+        private static Stone fourthStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32 + 20.32),false);
+        private static Stone fifthStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        private static Stone sixthStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32),false);
 
-        public static Stone[] stoneArray = {nullStone, firstStone, secondStone, thirdStone, fourthStone, fifthStone, sixthStone};
+        private static Stone[] stoneArray = {nullStone, firstStone, secondStone, thirdStone, fourthStone, fifthStone, sixthStone};
 
         public static void markAsSkystone(int stoneIndex) {
             stoneArray[stoneIndex].isSkystone = true;
@@ -55,7 +55,7 @@ public class FieldStats {
                     return stoneArray[i].getPosition();
                 }
             }
-            return stoneArray[0].getPosition();
+            return stoneArray[5].getPosition();
         }
     }
 
