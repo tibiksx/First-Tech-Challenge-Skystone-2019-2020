@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.ComputerVision.CameraThread;
 import org.firstinspires.ftc.teamcode.ComputerVision.SkystoneDetector;
 import org.firstinspires.ftc.teamcode.FieldStats;
@@ -27,6 +28,7 @@ import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.toRadians;
 import static org.firstinspires.ftc.teamcode.Misc.Utilities.AngleWrap;
+import static org.firstinspires.ftc.teamcode.Misc.Utilities.deleteCache;
 
 @Autonomous(name = "Auto RED", group = "Autonomous")
 public class Autonomous_RED extends LinearOpMode {
@@ -52,16 +54,17 @@ public class Autonomous_RED extends LinearOpMode {
     private double globalAngle;
     private double rotation;
 
-    private PIDController powerPID;
 
     @Override
     public void runOpMode() throws InterruptedException {
+
+        deleteCache(AppUtil.getDefContext()); //delete cache
+
         robot.init(hardwareMap);
         robot.initIMU();
         robot.initWebcam();
 
-//        skystoneDetector = new SkystoneDetector(robot.webcam, telemetry, robot.cameraMonitorViewId);
-//        skystoneDetector.init();
+        FieldStats.REDStones.unMarkAllStones();
 
         cameraThread = new CameraThread(robot.webcam);
         Thread cameraRunner = new Thread(cameraThread);
@@ -71,7 +74,7 @@ public class Autonomous_RED extends LinearOpMode {
         sleep(2000);
         cameraThread.setState(Utilities.CAMERA_STATE.STREAM);
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal,robot.ExpansionHub1, Utilities.TICKS_PER_INCH, 50);
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, robot.ExpansionHub1, Utilities.TICKS_PER_INCH, 50);
         globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, toRadians(initialOrientationDegrees));
         globalPositionUpdate.reverseRightEncoder();
         Thread positionThread = new Thread(globalPositionUpdate);
@@ -95,10 +98,6 @@ public class Autonomous_RED extends LinearOpMode {
         sliderThreadPID = new SliderThreadPID(robot.slider);
         Thread sliderThread = new Thread(sliderThreadPID);
         sliderThread.start();
-
-
-        //PIDController pidRotate = new PIDController(0.025, 0.0001, 0.00001);
-        powerPID = new PIDController(0, 0, 0);
 
         if (!CameraThread.isAlive()) {
             cameraRunner = new Thread(cameraThread);
@@ -130,14 +129,22 @@ public class Autonomous_RED extends LinearOpMode {
         if (closestStone1.getPosition().x != -1) {
             positioningSystem.Detach();
             sliderThreadPID.setTicks(1000);
-            goToPositionNoTurning(closestStone1.getPosition().x, closestStone1.getPosition().y, 1, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.HIGH);
+
+            goToPositionNoTurning(closestStone1.getPosition(), 1, globalPositionUpdate, robot, new PIDController(0.02, 0.0002, 0),5);
             clawSystem.lowerFlipper();
             sleep(600);
             sliderThreadPID.setTicks(600);
 
+            telemetry.addData("Target: ",closestStone1.getPosition().x + "  " + closestStone1.getPosition().y);
+            telemetry.addData("index:",closestStoneIndex);
+            telemetry.addData("X Y",Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition)+ "  "
+                    +Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition));
+            telemetry.update();
+            sleep(5000);
+
 
         } else {  //if we did not find a stone for some reason just park for now
-            goToPositionNoTurning(285, 180, 1, globalPositionUpdate, robot, Utilities.MOVEMENT_PRECISION.MEDIUM);
+            goToPositionNoTurning(new Point(285, 180), 1, globalPositionUpdate, robot, new PIDController(0, 0, 0),5);
         }
     }
 
@@ -243,36 +250,29 @@ public class Autonomous_RED extends LinearOpMode {
     }
 
 
-    private void goToPositionNoTurning(double x, double y, double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Utilities.MOVEMENT_PRECISION movementPrecision) {
+    private void goToPositionNoTurning(Point target, double moveSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, PIDController pidController, int tolerance) {
         double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
         double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
         double worldAngle_rad;
 
-        double initialDistance = Math.hypot(x - worldXPosition, y - worldYPosition);
+        double initialDistance = Math.hypot(target.x - worldXPosition, target.y - worldYPosition);
 
         //PID controller that outputs a fraction of the power to apply to the motors
-        //based on the distance to the target
 
-//        double p = Math.abs(moveSpeed/initialDistance);
-//        double i = p / 100.0;
-//        powerPID.setPID(p, i, 0);
-
-        powerPID.setPID(0.05,0.001,0);
-
-        powerPID.setSetpoint(initialDistance);
-        powerPID.setInputRange(0, initialDistance);
-        powerPID.setOutputRange(0, moveSpeed);
-        powerPID.setTolerance(5);
-        powerPID.enable();
+        pidController.setSetpoint(initialDistance);
+        pidController.setInputRange(0, initialDistance);
+        pidController.setOutputRange(0, moveSpeed);
+        pidController.setTolerance(tolerance);
+        pidController.enable();
 
         do {
             worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
             worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
             worldAngle_rad = covertToUnitCircle(Math.toRadians(getZAngle() + initialOrientationDegrees));
 
-            double distanceToTarget = Math.hypot(x - worldXPosition, y - worldYPosition);
+            double distanceToTarget = Math.hypot(target.x - worldXPosition, target.y - worldYPosition);
 
-            double absoluteAngleToTarget = Math.atan2(y - worldYPosition, x - worldXPosition);
+            double absoluteAngleToTarget = Math.atan2(target.y - worldYPosition, target.x - worldXPosition);
             double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad - Math.toRadians(90)));
 
             double relativeXToPoint = Math.cos(relativeAngleToPoint) * distanceToTarget;
@@ -284,15 +284,16 @@ public class Autonomous_RED extends LinearOpMode {
             movementYPower = Range.clip(movementYPower, -1, 1);
 
 
-            double powerFraction = powerPID.performPID(initialDistance - distanceToTarget);
-            if (powerFraction <= 0.30) {
-                robot.frontLeftWheel.setPower(0);
-                robot.frontRightWheel.setPower(0);
-                robot.backLeftWheel.setPower(0);
-                robot.backRightWheel.setPower(0);
-                break;
-            }
+            double powerFraction = pidController.performPID(initialDistance - distanceToTarget);
 
+            if( initialDistance - distanceToTarget < 10 && initialDistance > 15) powerFraction = 0.6;
+//            if (powerFraction <= 0.25) {
+//                robot.frontLeftWheel.setPower(0);
+//                robot.frontRightWheel.setPower(0);
+//                robot.backLeftWheel.setPower(0);
+//                robot.backRightWheel.setPower(0);
+//                break;
+//            }
 
 
             double _movement_x = movementXPower * powerFraction;
@@ -336,18 +337,18 @@ public class Autonomous_RED extends LinearOpMode {
 
             telemetry.addData(" Dist to target", distanceToTarget);
             telemetry.addData("PID power fraction", powerFraction);
-            telemetry.addData("Error", powerPID.getError());
-            telemetry.addData("On target:", powerPID.onTarget());
-            telemetry.addData("Constants: ", numberFormat.format(powerPID.getP()) + " " + numberFormat.format(powerPID.getI()));
-            telemetry.addData("Set Point", powerPID.getSetpoint());
+            telemetry.addData("Error", pidController.getError());
+            telemetry.addData("On target:", pidController.onTarget());
+            telemetry.addData("Constants: ", numberFormat.format(pidController.getP()) + " " + numberFormat.format(pidController.getI()));
+            telemetry.addData("Set Point", pidController.getSetpoint());
             //telemetry.addData("IMU angle", getZAngle());
             //telemetry.addData("Angle:", Math.toDegrees(worldAngle_rad));
             //telemetry.addData("X pos:", worldXPosition);
             //telemetry.addData("Y pos: ", worldYPosition);
             telemetry.update();
-        } while (opModeIsActive() && !powerPID.onTarget());
+        } while (opModeIsActive() && !pidController.onTarget());
 
-        telemetry.addData("Finished","lol");
+        telemetry.addData("Finished", "lol");
         telemetry.update();
 
         robot.frontLeftWheel.setPower(0);
@@ -358,7 +359,7 @@ public class Autonomous_RED extends LinearOpMode {
     }
 
 
-    public void goToPositionTurning(double x, double y, double movementSpeed, double preferredAngle, double turnSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Telemetry telemetry) {
+    public void goToPositionTurning(double x, double y, double movementSpeed, double preferredAngle, double turnSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Telemetry telemetry, PIDController pidController) {
 
         double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
         double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
@@ -370,10 +371,17 @@ public class Autonomous_RED extends LinearOpMode {
         if (preferredAngle >= TWO_PI) preferredAngle -= TWO_PI;
         preferredAngle = covertToUnitCircle(preferredAngle);
 
-        while (opModeIsActive()) {
+
+        pidController.setSetpoint(initialDistance);
+        pidController.setInputRange(0, initialDistance);
+        pidController.setOutputRange(0, movementSpeed);
+        pidController.setTolerance(5);
+        pidController.enable();
+
+        do {
             worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
             worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
-            worldAngle_rad = covertToUnitCircle(getZAngle() - Math.toRadians(initialOrientationDegrees));
+            worldAngle_rad = covertToUnitCircle(Math.toRadians(getZAngle() + initialOrientationDegrees));
 
             if (worldXPosition == x && worldYPosition == y && worldAngle_rad == preferredAngle) {
                 robot.frontLeftWheel.setPower(0);
@@ -401,25 +409,35 @@ public class Autonomous_RED extends LinearOpMode {
 
             relativeTurnAngle = AngleWrap(relativeTurnAngle);
 
+            double powerFraction = pidController.performPID(initialDistance - distanceToTarget);
+            if (powerFraction <= 0.30) {
+                robot.frontLeftWheel.setPower(0);
+                robot.frontRightWheel.setPower(0);
+                robot.backLeftWheel.setPower(0);
+                robot.backRightWheel.setPower(0);
+                break;
+            }
+
+
             double _movement_turn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1) * turnSpeed;
-            double _movement_x = movementXPower * movementSpeed;
-            double _movement_y = movementYPower * movementSpeed;
+            double _movement_x = movementXPower * powerFraction;
+            double _movement_y = movementYPower * powerFraction;
 
-            if (initialDistance - distanceToTarget < 5) {
-                _movement_x *= 0.7;
-                _movement_y *= 0.7;
-            }
+//            if (initialDistance - distanceToTarget < 5) {
+//                _movement_x *= 0.7;
+//                _movement_y *= 0.7;
+//            }
 
-            if (abs(relativeTurnAngle) < Math.toRadians(15)) _movement_turn *= 0.3;
-
-            if (distanceToTarget < 20 && distanceToTarget > 10 && movementSpeed > 0.5) {
-                _movement_x = _movement_x * 0.5;
-                _movement_y = _movement_y * 0.5;
-            }
-            if (distanceToTarget < 10 && movementSpeed > 0.5) {
-                _movement_x = _movement_x * 0.3;
-                _movement_y = _movement_y * 0.3;
-            }
+//            if (abs(relativeTurnAngle) < Math.toRadians(15)) _movement_turn *= 0.3;
+//
+//            if (distanceToTarget < 20 && distanceToTarget > 10 && movementSpeed > 0.5) {
+//                _movement_x = _movement_x * 0.5;
+//                _movement_y = _movement_y * 0.5;
+//            }
+//            if (distanceToTarget < 10 && movementSpeed > 0.5) {
+//                _movement_x = _movement_x * 0.3;
+//                _movement_y = _movement_y * 0.3;
+//            }
 
 
             double drive = _movement_y;
@@ -431,13 +449,13 @@ public class Autonomous_RED extends LinearOpMode {
             double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
             double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
-            if ((distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0 && _movement_turn == 0)) {
-                robot.frontLeftWheel.setPower(0);
-                robot.frontRightWheel.setPower(0);
-                robot.backLeftWheel.setPower(0);
-                robot.backRightWheel.setPower(0);
-                break;
-            }
+//            if ((distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0 && _movement_turn == 0)) {
+//                robot.frontLeftWheel.setPower(0);
+//                robot.frontRightWheel.setPower(0);
+//                robot.backLeftWheel.setPower(0);
+//                robot.backRightWheel.setPower(0);
+//                break;
+//            }
 
 
             robot.frontLeftWheel.setPower(leftFrontPower);
@@ -451,13 +469,17 @@ public class Autonomous_RED extends LinearOpMode {
             telemetry.addData("Y pos: ", worldYPosition);
             telemetry.update();
 
-        }
+        } while (opModeIsActive() && !pidController.onTarget());
 
+        robot.frontLeftWheel.setPower(0);
+        robot.frontRightWheel.setPower(0);
+        robot.backLeftWheel.setPower(0);
+        robot.backRightWheel.setPower(0);
     }
 
 
-    final static double TWO_PI = 2 * PI;
-    final static double HALF_PI = PI / 2;
+    private final static double TWO_PI = 2 * PI;
+    private final static double HALF_PI = PI / 2;
 
     private double covertToUnitCircle(double angle) {
         //reduce back to unit circle

@@ -19,7 +19,7 @@ import java.util.List;
 public class CameraThread implements Runnable {
 
     private OpenCvCamera camera;
-    private volatile Utilities.CAMERA_STATE state = Utilities.CAMERA_STATE.NULL;
+    private volatile Utilities.CAMERA_STATE state;
     private boolean active;
     private static volatile boolean kill = false;
 
@@ -47,7 +47,7 @@ public class CameraThread implements Runnable {
         this.camera = camera;
         active = true;
         kill = false;
-        Utilities.CAMERA_STATE state = Utilities.CAMERA_STATE.NULL;
+        state = Utilities.CAMERA_STATE.NULL;
         valMid = -1;
         valLeft = -1;
         valRight = -1;
