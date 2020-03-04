@@ -26,12 +26,12 @@ public class FieldStats {
 
     public static class REDStones {
         public final static Stone nullStone = new Stone(new Point(0,0),false);
-        public final static Stone firstStone = new Stone(new Point(231.24+30,10.16 - 7),false);
-        public final static Stone secondStone = new Stone(new Point(231.24+30,10.16 + 20.32 - 7),false);
-        public final static Stone thirdStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 - 7),false);
-        public final static Stone fourthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 - 7),false);
-        public final static Stone fifthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 + 20.32 - 7),false);
-        public final static Stone sixthStone = new Stone(new Point(231.24+30,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32 - 7),false);
+        public final static Stone firstStone = new Stone(new Point(231.24+30+5,10.16),false);
+        public final static Stone secondStone = new Stone(new Point(231.24+30+5,10.16 + 20.32),false);
+        public final static Stone thirdStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32),false);
+        public final static Stone fourthStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32 + 20.32+4.5),false);
+        public final static Stone fifthStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public final static Stone sixthStone = new Stone(new Point(231.24+30+5,114.5 + 4),false);
 
         public static Stone[] stoneArray = {nullStone, firstStone, secondStone, thirdStone, fourthStone, fifthStone, sixthStone};
 

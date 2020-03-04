@@ -128,13 +128,22 @@ public class Autonomous_RED extends LinearOpMode {
         }
         if (closestStone1.getPosition().x != -1) {
             positioningSystem.Detach();
-            sliderThreadPID.setTicks(1000);
+            sliderThreadPID.setTicks(1200);
+            clawSystem.Detach();
 
-            goToPositionNoTurning(closestStone1.getPosition(), 1, globalPositionUpdate, robot, new PIDController(0.02, 0.0002, 0),5);
+            if(closestStoneIndex == 4) {
+                goToPositionNoTurning(closestStone1.getPosition(), 1, globalPositionUpdate, robot, new PIDController(0.01, 0.0004, 0),5);
+            } else {
+                goToPositionNoTurning(closestStone1.getPosition(), 1, globalPositionUpdate, robot, new PIDController(0.0092, 0.0004, 0),5);
+            }
             clawSystem.lowerFlipper();
             sleep(600);
             sliderThreadPID.setTicks(600);
 
+
+            //goToPositionNoTurning(new Point(closestStone1.getPosition().x + 15,closestStone1.getPosition().y), 1, globalPositionUpdate, robot, new PIDController(0.001, 0, 0),5);
+            goToPositionTurning(new Point(closestStone1.getPosition().x + 20.5,closestStone1.getPosition().y),1,Math.toRadians(-90),0.3,globalPositionUpdate,robot,telemetry,new PIDController(0.027,0.0008,0),15);
+            positioningSystem.Attach();
             telemetry.addData("Target: ",closestStone1.getPosition().x + "  " + closestStone1.getPosition().y);
             telemetry.addData("index:",closestStoneIndex);
             telemetry.addData("X Y",Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition)+ "  "
@@ -286,28 +295,11 @@ public class Autonomous_RED extends LinearOpMode {
 
             double powerFraction = pidController.performPID(initialDistance - distanceToTarget);
 
-            if( initialDistance - distanceToTarget < 10 && initialDistance > 15) powerFraction = 0.6;
-//            if (powerFraction <= 0.25) {
-//                robot.frontLeftWheel.setPower(0);
-//                robot.frontRightWheel.setPower(0);
-//                robot.backLeftWheel.setPower(0);
-//                robot.backRightWheel.setPower(0);
-//                break;
-//            }
+            if( initialDistance - distanceToTarget < 5 && initialDistance > 15) powerFraction = 0.8;
 
 
             double _movement_x = movementXPower * powerFraction;
             double _movement_y = movementYPower * powerFraction;
-
-
-//
-//            if (distanceToTarget < 20 && moveSpeed > 0.3) {
-//                _movement_x = _movement_x * 0.5;
-//                _movement_y = _movement_y * 0.5;
-//            } else if (distanceToTarget < 10 && moveSpeed > 0.8) {
-//                _movement_x = _movement_x * 0.3;
-//                _movement_y = _movement_y * 0.3;
-//            }
 
 
             double drive = _movement_y;
@@ -318,14 +310,6 @@ public class Autonomous_RED extends LinearOpMode {
             double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
             double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
             double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
-
-//            if ((distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0)) {
-//                robot.frontLeftWheel.setPower(0);
-//                robot.frontRightWheel.setPower(0);
-//                robot.backLeftWheel.setPower(0);
-//                robot.backRightWheel.setPower(0);
-//                break;
-//            }
 
 
             robot.frontLeftWheel.setPower(leftFrontPower);
@@ -359,13 +343,13 @@ public class Autonomous_RED extends LinearOpMode {
     }
 
 
-    public void goToPositionTurning(double x, double y, double movementSpeed, double preferredAngle, double turnSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Telemetry telemetry, PIDController pidController) {
+    public void goToPositionTurning(Point position, double movementSpeed, double preferredAngle, double turnSpeed, OdometryGlobalCoordinatePosition globalPositionUpdate, Hardware robot, Telemetry telemetry, PIDController pidController, int tolerance) {
 
         double worldXPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
         double worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
         double worldAngle_rad;
 
-        double initialDistance = Math.hypot(x - worldXPosition, y - worldYPosition);
+        double initialDistance = Math.hypot(position.x - worldXPosition, position.y - worldYPosition);
 
         if (preferredAngle <= TWO_PI) preferredAngle += TWO_PI;
         if (preferredAngle >= TWO_PI) preferredAngle -= TWO_PI;
@@ -383,17 +367,9 @@ public class Autonomous_RED extends LinearOpMode {
             worldYPosition = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition);
             worldAngle_rad = covertToUnitCircle(Math.toRadians(getZAngle() + initialOrientationDegrees));
 
-            if (worldXPosition == x && worldYPosition == y && worldAngle_rad == preferredAngle) {
-                robot.frontLeftWheel.setPower(0);
-                robot.frontRightWheel.setPower(0);
-                robot.backLeftWheel.setPower(0);
-                robot.backRightWheel.setPower(0);
-                break;
-            }
+            double distanceToTarget = Math.hypot(position.x - worldXPosition, position.y - worldYPosition);
 
-            double distanceToTarget = Math.hypot(x - worldXPosition, y - worldYPosition);
-
-            double absoluteAngleToTarget = Math.atan2(y - worldYPosition, x - worldXPosition);
+            double absoluteAngleToTarget = Math.atan2(position.y - worldYPosition, position.x - worldXPosition);
             double relativeAngleToPoint = AngleWrap(absoluteAngleToTarget - (worldAngle_rad - Math.toRadians(90)));
 
             double relativeXToPoint = Math.cos(relativeAngleToPoint) * distanceToTarget;
@@ -410,34 +386,11 @@ public class Autonomous_RED extends LinearOpMode {
             relativeTurnAngle = AngleWrap(relativeTurnAngle);
 
             double powerFraction = pidController.performPID(initialDistance - distanceToTarget);
-            if (powerFraction <= 0.30) {
-                robot.frontLeftWheel.setPower(0);
-                robot.frontRightWheel.setPower(0);
-                robot.backLeftWheel.setPower(0);
-                robot.backRightWheel.setPower(0);
-                break;
-            }
 
 
             double _movement_turn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1) * turnSpeed;
             double _movement_x = movementXPower * powerFraction;
             double _movement_y = movementYPower * powerFraction;
-
-//            if (initialDistance - distanceToTarget < 5) {
-//                _movement_x *= 0.7;
-//                _movement_y *= 0.7;
-//            }
-
-//            if (abs(relativeTurnAngle) < Math.toRadians(15)) _movement_turn *= 0.3;
-//
-//            if (distanceToTarget < 20 && distanceToTarget > 10 && movementSpeed > 0.5) {
-//                _movement_x = _movement_x * 0.5;
-//                _movement_y = _movement_y * 0.5;
-//            }
-//            if (distanceToTarget < 10 && movementSpeed > 0.5) {
-//                _movement_x = _movement_x * 0.3;
-//                _movement_y = _movement_y * 0.3;
-//            }
 
 
             double drive = _movement_y;
@@ -448,15 +401,6 @@ public class Autonomous_RED extends LinearOpMode {
             double leftBackPower = Range.clip(drive + turn + strafe, -1.0, 1.0);
             double rightFrontPower = Range.clip(drive - turn + strafe, -1.0, 1.0);
             double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
-
-//            if ((distanceToTarget < 5) || (_movement_x == 0 && _movement_y == 0 && _movement_turn == 0)) {
-//                robot.frontLeftWheel.setPower(0);
-//                robot.frontRightWheel.setPower(0);
-//                robot.backLeftWheel.setPower(0);
-//                robot.backRightWheel.setPower(0);
-//                break;
-//            }
-
 
             robot.frontLeftWheel.setPower(leftFrontPower);
             robot.frontRightWheel.setPower(rightFrontPower);
