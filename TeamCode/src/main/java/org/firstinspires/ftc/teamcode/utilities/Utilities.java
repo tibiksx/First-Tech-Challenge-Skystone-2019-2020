@@ -1,10 +1,14 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
+import android.content.Context;
+
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.Hardware;
 import org.firstinspires.ftc.teamcode.odometry.OdometryGlobalCoordinatePosition;
+
+import java.io.File;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
@@ -178,5 +182,29 @@ public class Utilities {
             return angle;
         }
         return angle;
+    }
+
+    public static void deleteCache(Context context) {
+        try {
+            File dir = context.getCacheDir();
+            deleteDir(dir);
+        } catch (Exception e) { e.printStackTrace();}
+    }
+
+    public static boolean deleteDir(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+            return dir.delete();
+        } else if(dir!= null && dir.isFile()) {
+            return dir.delete();
+        } else {
+            return false;
+        }
     }
 }

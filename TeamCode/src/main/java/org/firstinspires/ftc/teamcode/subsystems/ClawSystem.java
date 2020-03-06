@@ -15,7 +15,7 @@ public class ClawSystem {
     }
 
     public void detach() {
-        claw.setPosition(0.3);
+        claw.setPosition(0.05);
         raiseFlipper();
         attached = false;
     }
@@ -38,7 +38,8 @@ public class ClawSystem {
     }
 
     public void initial() {
-        claw.setPosition(0.8);
+        claw.setPosition(0.6);
+        flipper.setPosition(1);
     }
 
     public boolean isAttached() { return attached; }

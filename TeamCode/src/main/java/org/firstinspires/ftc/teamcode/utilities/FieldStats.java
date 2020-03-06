@@ -25,13 +25,13 @@ public class FieldStats {
 
 
     public static class REDStones {
-        private static Stone nullStone = new Stone(new Point(0,0),false);
-        private static Stone firstStone = new Stone(new Point(260.3,10.16),false);
-        private static Stone secondStone = new Stone(new Point(260.3,10.16 + 20.32),false);
-        private static Stone thirdStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32),false);
-        private static Stone fourthStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32 + 20.32),false);
-        private static Stone fifthStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
-        private static Stone sixthStone = new Stone(new Point(260.3,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public final static Stone nullStone = new Stone(new Point(280,180),false);
+        public final static Stone firstStone = new Stone(new Point(231.24+30+5,10.16),false);
+        public final static Stone secondStone = new Stone(new Point(231.24+30+5,10.16 + 20.32),false);
+        public final static Stone thirdStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32),false);
+        public final static Stone fourthStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32 + 20.32),false);
+        public final static Stone fifthStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public final static Stone sixthStone = new Stone(new Point(231.24+30+5,112),false);
 
         private static Stone[] stoneArray = {nullStone, firstStone, secondStone, thirdStone, fourthStone, fifthStone, sixthStone};
 
@@ -49,24 +49,38 @@ public class FieldStats {
             telemetry.update();
         }
 
-        public static Point getSkystone(int idx) {
+        public static void unMarkAsSkystone(int stoneIndex) {
+            stoneArray[stoneIndex].isSkystone = false;
+        }
+
+        public static void unMarkAllStones() {
+            for(int i = 1; i<=6; i++) {
+                unMarkAsSkystone(i);
+            }
+        }
+
+        public static int getIndex(int idx) {
             for (int i = idx * idx; i <= 6; ++i) {
                 if(stoneArray[i].isSkystone()) {
-                    return stoneArray[i].getPosition();
+                    return i;
                 }
             }
-            return stoneArray[5].getPosition();
+            return getIndex(idx);
+        }
+
+        public static Point getSkystone(int idx) {
+            return stoneArray[getIndex(idx)].getPosition();
         }
     }
 
     public static class BLUEStones {
-        public static Stone nullStone = new Stone(new Point(0,0),false);
-        public static Stone firstStone = new Stone(new Point(122.2,10.16),false);
-        public static Stone secondStone = new Stone(new Point(122.2,10.16 + 20.32),false);
-        public static Stone thirdStone = new Stone(new Point(122.2,10.16 + 20.32 + 20.32),false);
-        public static Stone fourthStone = new Stone(new Point(122.2,10.16 + 20.32 + 20.32 + 20.32),false);
-        public static Stone fifthStone = new Stone(new Point(122.2,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
-        public static Stone sixthStone = new Stone(new Point(122.2,10.16 + 20.32 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public final static Stone nullStone = new Stone(new Point(0,0),false);
+        public final static Stone firstStone = new Stone(new Point(231.24+30+5,10.16),false);
+        public final static Stone secondStone = new Stone(new Point(231.24+30+5,10.16 + 20.32),false);
+        public final static Stone thirdStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32),false);
+        public final static Stone fourthStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32 + 20.32+4.5),false);
+        public final static Stone fifthStone = new Stone(new Point(231.24+30+5,10.16 + 20.32 + 20.32 + 20.32 + 20.32),false);
+        public final static Stone sixthStone = new Stone(new Point(231.24+30+5,114.5 + 4),false);
 
         public static Stone[] stoneArray = {nullStone, firstStone, secondStone, thirdStone, fourthStone, fifthStone, sixthStone};
 

@@ -47,6 +47,11 @@ public class CameraThread implements Runnable {
 
     public CameraThread(OpenCvCamera camera) {
         this.camera = camera;
+        kill = false;
+        state = Utilities.CAMERA_STATE.NULL;
+        valMid = -1;
+        valLeft = -1;
+        valRight = -1;
     }
 
     @Override
@@ -117,7 +122,7 @@ public class CameraThread implements Runnable {
     }
 
     public static boolean isHealthy() {
-        return kill;
+        return !kill;
     }
 
     public void setState(Utilities.CAMERA_STATE state) {
