@@ -15,14 +15,14 @@ public class ClawSystem {
     }
 
     public void detach() {
-        claw.setPosition(0.05);
+        claw.setPosition(0.4);
         raiseFlipper();
         attached = false;
     }
 
     public void attach() {
         lowerFlipper();
-        claw.setPosition(0.6);
+        claw.setPosition(0.5);
         attached = true;
     }
 

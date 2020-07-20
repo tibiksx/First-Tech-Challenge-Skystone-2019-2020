@@ -31,7 +31,6 @@ public class TeleOpMode extends Base {
 
     private double lifterOldPower = 0;
     private double lifterNewPower = 0;
-
     private double sliderPower = 0;
 
     private double powerCoeff = 1;

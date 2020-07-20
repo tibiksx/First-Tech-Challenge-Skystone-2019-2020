@@ -78,7 +78,7 @@ public class RedProficientMasterclass extends LinearOpMode {
 
         //powerPID = new PIDController(0, 0, 0);
 
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 50);
+        globalPositionUpdate = new OdometryGlobalCoordinatePosition(robot.verticalLeft, robot.verticalRight, robot.horizontal, Utilities.TICKS_PER_INCH, 25);
         globalPositionUpdate.setInitialCoordinates(initialXCoordinate, initialYCoordinate, toRadians(initialOrientationDegrees));
         globalPositionUpdate.reverseRightEncoder();
         Thread positionThread = new Thread(globalPositionUpdate);
@@ -121,8 +121,8 @@ public class RedProficientMasterclass extends LinearOpMode {
         Point secondSkystone = FieldStats.REDStones.getSkystone(1);
 
         positioningSystem.detach();
-        sliderThreadPID.setTicks(1200);
-        sleep(200);
+        sliderThreadPID.setTicks(1300);
+        sleep(100);
         clawSystem.detach();
 
         if (FieldStats.REDStones.getIndex(2) == 4) {
@@ -134,16 +134,16 @@ public class RedProficientMasterclass extends LinearOpMode {
             goToPositionTurningPID(new Point(firstSkystone.x + 17.5, firstSkystone.y),1, Math.toRadians(-90),0.25, new PIDController(0.027,0.00087,0), 5);
             positioningSystem.attach();
             // 0.6 0.8
-            goToPositionTurningPID(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, new PIDController(0.04, 0.006, 0), 5);
+            goToPositionTurningPID(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, new PIDController(0.1, 0.035, 0.001), 5);
             clawSystem.attach();
             positioningSystem.detach();
             lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
-            goToPositionTurningPID(new Point(firstSkystone.x, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5), 1, Math.toRadians(-90), 0.6, new PIDController(0.05, 0.01, 0), 5);
-            goToPositionNoTurningNoPID(new Point(firstSkystone.x - 15, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5));
-            //goToPositionNoTurning(new Point(firstSkystone.x - 15, FieldStats.REDFoundation.DEFAULT_placingPosition.y), 0.4, globalPositionUpdate, robot, new PIDController(0.06, 0.05, 0), 5);
-            foundationSystem.attach();
-            sleep(900);
+            goToPositionTurningPID(new Point(firstSkystone.x, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5), 1, Math.toRadians(-90), 0.6, new PIDController(0.05, 0.025, 0.02), 5);
             sliderThreadPID.setTicks(1600);
+            goToPositionNoTurningNoPID(new Point(firstSkystone.x - 20, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5));
+            foundationSystem.attach();
+            clawSystem.detach();
+            sleep(900);
             while (getZAngle() < 86) {
                 robot.frontLeftWheel.setPower(0);
                 robot.backLeftWheel.setPower(0);
@@ -155,26 +155,110 @@ public class RedProficientMasterclass extends LinearOpMode {
             robot.frontRightWheel.setPower(0);
             robot.backRightWheel.setPower(0);
             //goToPositionTurning(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, globalPositionUpdate, robot, telemetry, new PIDController(0.1, 0.06, 0), 3);
-            clawSystem.detach();
             foundationSystem.detach();
-        } else {
+
+            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.LOW));
+            sliderThreadPID.setTicks(700);
+            //goToPositionTurningPID(new Point(secondSkystone.x, secondSkystone.y), 1, Math.toRadians(-90), 0.5, new PIDController(0.1, 0.01, 0), 5);
+            goToPositionTurningPID(new Point(firstSkystone.x + 20.5, 180), 1, Math.toRadians(0), 0.6, new PIDController(0.027, 0.001, 0), 5);
+            goToPositionTurningPID(new Point(secondSkystone.x + 20.5, secondSkystone.y), 1, Math.toRadians(-90), 0.6, new PIDController(0.1, 0.01, 0), 5);
+            clawSystem.detach();
+            sliderThreadPID.setTicks(1600);
+            goToPositionNoTurningNoPID(new Point(secondSkystone.x - 15, secondSkystone.y));
+            clawSystem.lowerFlipper();
+            sleep(600);
+            sliderThreadPID.setTicks(800);
+            goToPositionTurningPID(new Point(secondSkystone.x + 17.5, secondSkystone.y), 0.5, Math.toRadians(-90), 0.25, new PIDController(0.027, 0.00087, 0), 5);
+            positioningSystem.attach();
+            goToPositionTurningPID(new Point(secondSkystone.x + 17.5, 180), 1, Math.toRadians(0), 0.6, new PIDController(0.1, 0.001, 0), 5);
+
+        } else if (FieldStats.REDStones.getIndex(2) == 5) { // OKAY - 19 SECUNDE
             goToPositionNoTurningPID(firstSkystone, 1, new PIDController(0.0092, 0.0005, 0),5);
             clawSystem.lowerFlipper();
             sleep(600);
             sliderThreadPID.setTicks(600);
 
-            goToPositionTurningPID(new Point(firstSkystone.x + 17.5, firstSkystone.y),1, Math.toRadians(-90),0.25, new PIDController(0.027,0.00087,0),5);
+            goToPositionTurningPID(new Point(firstSkystone.x + 17.5, firstSkystone.y),1, Math.toRadians(-90),0.25, new PIDController(0.027,0.00087,0.1),20);
             positioningSystem.attach();
             // 0.6 0.8
             goToPositionTurningPID(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, new PIDController(0.1, 0.01, 0), 5);
             clawSystem.attach();
             positioningSystem.detach();
             lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
-            goToPositionTurningPID(new Point(firstSkystone.x, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5), 1, Math.toRadians(-90), 0.6, new PIDController(0.05, 0.01, 0), 5);
-            goToPositionNoTurningNoPID(new Point(firstSkystone.x - 15, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5));
+            goToPositionTurningPID(new Point(firstSkystone.x, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5), 1, Math.toRadians(-90), 0.6, new PIDController(0.05, 0.025, 0.0007), 8);
+            double temp = Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition);
+            while (temp - Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition) < 18.5) {
+                robot.frontLeftWheel.setPower(0.5);
+                robot.frontRightWheel.setPower(0.5);
+                robot.backLeftWheel.setPower(0.5);
+                robot.backRightWheel.setPower(0.5);
+            }
+            robot.frontLeftWheel.setPower(0);
+            robot.frontRightWheel.setPower(0);
+            robot.backLeftWheel.setPower(0);
+            robot.backRightWheel.setPower(0);
+            sliderThreadPID.setTicks(1600);
             foundationSystem.attach();
             sleep(900);
+            clawSystem.detach();
+            while (getZAngle() < 86) {
+                robot.frontLeftWheel.setPower(0);
+                robot.backLeftWheel.setPower(0);
+                robot.frontRightWheel.setPower(-1);
+                robot.backRightWheel.setPower(-1);
+            }
+            robot.frontLeftWheel.setPower(0);
+            robot.backLeftWheel.setPower(0);
+            robot.frontRightWheel.setPower(0);
+            robot.backRightWheel.setPower(0);
+            Point remainder = new Point(Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalXCoordinatePosition), Utilities.TICKS_TO_CM(globalPositionUpdate.robotGlobalYCoordinatePosition));
+            //goToPositionTurning(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, globalPositionUpdate, robot, telemetry, new PIDController(0.1, 0.06, 0), 3);
+            foundationSystem.detach();
+
+            ////////////
+
+            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.LOW));
+            sliderThreadPID.setTicks(700);
+            //goToPositionTurningPID(new Point(secondSkystone.x, secondSkystone.y), 1, Math.toRadians(-90), 0.5, new PIDController(0.1, 0.01, 0), 5);
+            goToPositionTurningPID(new Point(firstSkystone.x + 20.5, 180), 1, Math.toRadians(0), 0.6, new PIDController(0.027, 0.001, 0), 5);
+            goToPositionTurningPID(new Point(secondSkystone.x + 20.5, secondSkystone.y), 1, Math.toRadians(-90), 0.6, new PIDController(0.1, 0.01, 0), 5);
+            clawSystem.detach();
             sliderThreadPID.setTicks(1600);
+            goToPositionNoTurningNoPID(new Point(secondSkystone.x - 15, secondSkystone.y));
+            clawSystem.lowerFlipper();
+            sleep(600);
+            sliderThreadPID.setTicks(800);
+            goToPositionTurningPID(new Point(secondSkystone.x + 17.5, secondSkystone.y), 0.5, Math.toRadians(-90), 0.25, new PIDController(0.027, 0.00087, 0), 15);
+            positioningSystem.attach();
+            goToPositionTurningPID(new Point(secondSkystone.x + 18.5, 180), 1, Math.toRadians(0), 1, new PIDController(0.1, 0.001, 0.0), 15);
+
+            clawSystem.attach();
+            positioningSystem.detach();
+            sliderThreadPID.setTicks(1800);
+            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.SECOND));
+            goToPositionTurningPID(new Point(secondSkystone.x + 18.5, 310), 1, Math.toRadians(0), 0.2, new PIDController(0.1, 0.001, 0), 15);
+            clawSystem.detach();
+            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.LOW));
+            goToPositionTurningPID(new Point(secondSkystone.x + 18, 180), 1, Math.toRadians(0), 0.2, new PIDController(0.1, 0.001, 0), 20);
+
+        } else {
+            goToPositionNoTurningPID(firstSkystone, 1, new PIDController(0.0092, 0.0005, 0),5);
+            clawSystem.lowerFlipper();
+            sleep(600);
+            sliderThreadPID.setTicks(600);
+
+            positioningSystem.attach();
+            // 0.6 0.8
+            goToPositionTurningPID(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, new PIDController(0.1, 0.01, 0), 5);
+            clawSystem.attach();
+            positioningSystem.detach();
+            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.FIRST));
+            goToPositionTurningPID(new Point(firstSkystone.x, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5), 1, Math.toRadians(-90), 0.8, new PIDController(0.05, 0.025, 0.04), 5);
+            sliderThreadPID.setTicks(1600);
+            goToPositionNoTurningNoPID(new Point(firstSkystone.x - 25, FieldStats.REDFoundation.DEFAULT_placingPosition.y - 5));
+            foundationSystem.attach();
+            clawSystem.detach();
+            sleep(900);
             while (getZAngle() < 86) {
                 robot.frontLeftWheel.setPower(0);
                 robot.backLeftWheel.setPower(0);
@@ -186,8 +270,23 @@ public class RedProficientMasterclass extends LinearOpMode {
             robot.frontRightWheel.setPower(0);
             robot.backRightWheel.setPower(0);
             //goToPositionTurning(new Point(firstSkystone.x + 17.5, 240), 1, Math.toRadians(0), 1, globalPositionUpdate, robot, telemetry, new PIDController(0.1, 0.06, 0), 3);
-            clawSystem.detach();
             foundationSystem.detach();
+
+            lifterThread.setTicks(LifterMethods.getTicksFromState(LifterMethods.LIFTER.LOW));
+            sliderThreadPID.setTicks(700);
+            //goToPositionTurningPID(new Point(secondSkystone.x, secondSkystone.y), 1, Math.toRadians(-90), 0.5, new PIDController(0.1, 0.01, 0), 5);
+            goToPositionTurningPID(new Point(firstSkystone.x + 20.5, 180), 1, Math.toRadians(0), 0.6, new PIDController(0.027, 0.008, 0), 5);
+            clawSystem.detach();
+            sliderThreadPID.setTicks(1600);
+            goToPositionTurningPID(new Point(secondSkystone.x + 20.5, secondSkystone.y), 1, Math.toRadians(-90), 0.6, new PIDController(0.1, 0.01, 0), 5);
+            goToPositionNoTurningNoPID(new Point(secondSkystone.x - 5, secondSkystone.y));
+            clawSystem.lowerFlipper();
+            sleep(600);
+            sliderThreadPID.setTicks(800);
+            goToPositionTurningPID(new Point(secondSkystone.x + 17.5, secondSkystone.y), 0.5, Math.toRadians(-90), 0.25, new PIDController(0.027, 0.00087, 0), 5);
+            positioningSystem.attach();
+            goToPositionTurningPID(new Point(secondSkystone.x + 19.5, 180), 1, Math.toRadians(0), 1, new PIDController(0.1, 0.05, 0.008), 5);
+
         }
 
         while (opModeIsActive()) {
@@ -317,14 +416,14 @@ public class RedProficientMasterclass extends LinearOpMode {
             double rightBackPower = Range.clip(drive - turn - strafe, -1.0, 1.0);
 
 
-            robot.frontLeftWheel.setPower(leftFrontPower);
-            robot.frontRightWheel.setPower(rightFrontPower);
-            robot.backLeftWheel.setPower(leftBackPower);
-            robot.backRightWheel.setPower(rightBackPower);
+            robot.frontLeftWheel.setPower(leftFrontPower * 0.5);
+            robot.frontRightWheel.setPower(rightFrontPower * 0.5);
+            robot.backLeftWheel.setPower(leftBackPower * 0.5);
+            robot.backRightWheel.setPower(rightBackPower * 0.5);
 
             telemetry.addData(" Dist to target", distanceToTarget);
             telemetry.update();
-        } while (opModeIsActive() && distanceToTarget > 2);
+        } while (opModeIsActive() && distanceToTarget > 4.5);
 
         telemetry.addData("Finished", "|||");
         telemetry.update();
