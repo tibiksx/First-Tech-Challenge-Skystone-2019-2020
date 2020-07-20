@@ -6,8 +6,8 @@ apply plugin: 'com.android.library'
 android {
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 26
+        minSdkVersion 25
+        targetSdkVersion 27
     }
 
     compileSdkVersion 28
